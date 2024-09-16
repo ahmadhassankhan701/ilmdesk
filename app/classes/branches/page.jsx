@@ -1,38 +1,50 @@
 "use client";
+import BranchCard from "@/components/SpecialCards/BranchCard";
 import SubjectCard from "@/components/SpecialCards/SubjectCard";
 import { db } from "@/firebase";
 import { NavigateNext } from "@mui/icons-material";
 import { Box, Breadcrumbs, Grid, Typography } from "@mui/material";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, doc, getDocs, query, where } from "firebase/firestore";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 const page = () => {
-  const [classes, setClasses] = useState([]);
+  const route = useRouter();
+  const searchParam = useSearchParams();
+  const selectedClass = searchParam.get("selectedClass");
+  const subject = searchParam.get("subject");
+  const [branches, setBranches] = useState([]);
   useEffect(() => {
-    const fetchClasses = async () => {
-      const docsRef = collection(db, "Curriculum");
-      const snapshot = await getDocs(docsRef);
-      let items = [];
+    const fetchBranches = async () => {
+      if (!selectedClass || !subject) {
+        route.back();
+        return;
+      }
+      const docsRef = collection(db, `Quiz`);
+      const q = query(
+        docsRef,
+        where("class", "==", selectedClass),
+        where("subject", "==", subject)
+      );
+      const snapshot = await getDocs(q);
+      let branchesArray = [];
       if (snapshot.size !== 0) {
-        snapshot.docs.map((doc) => {
-          if (doc.data().type === "class") {
-            items.push({
-              key: doc.id,
-              classname: doc.data().name,
-              subjects: doc.data().subjects,
-            });
+        snapshot.forEach((doc) => {
+          if (branchesArray.includes(doc.data().branch) == false) {
+            branchesArray.push(doc.data().branch);
           }
         });
+        setBranches(branchesArray);
       }
-      setClasses(items);
     };
-    fetchClasses();
+    fetchBranches();
   }, []);
 
   const breadCrumbs = [
     { name: "Home", url: "/" },
-    { name: "Classes", url: "#" },
+    { name: "Classes", url: "/classes/" },
+    { name: "Branches", url: "#" },
   ];
   return (
     <Box>
@@ -58,7 +70,7 @@ const page = () => {
               mb: 1,
             }}
           >
-            Classes
+            Branches
           </Typography>
           <Breadcrumbs
             separator={<NavigateNext fontSize="small" />}
@@ -79,14 +91,22 @@ const page = () => {
       </Box>
       <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={5}>
         <Grid container spacing={2}>
-          {Object.keys(classes).length > 0 ? (
-            classes.map((classo) => (
-              <Grid item xs={12} sm={6} md={4} key={classo.key}>
-                <SubjectCard
-                  image="/Currica/chemistry_subject.jpg"
-                  title={classo.classname}
-                  subjects={classo.subjects}
-                />
+          {Object.keys(branches).length > 0 ? (
+            branches.map((branch) => (
+              <Grid item xs={12} sm={6} md={4} key={branch}>
+                <Link
+                  href={{
+                    pathname: "/classes/chapters",
+                    query: { selectedClass, subject, branch },
+                  }}
+                  key={branch}
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
+                  <BranchCard
+                    image="/Currica/chemistry_subject.jpg"
+                    title={branch}
+                  />
+                </Link>
               </Grid>
             ))
           ) : (
@@ -105,7 +125,7 @@ const page = () => {
                   my={2}
                   fontWeight={"bold"}
                 >
-                  No classes available
+                  No branches found
                 </Typography>
               </Box>
             </Box>
