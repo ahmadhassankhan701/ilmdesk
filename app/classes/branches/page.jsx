@@ -1,15 +1,14 @@
 "use client";
 import BranchCard from "@/components/SpecialCards/BranchCard";
-import SubjectCard from "@/components/SpecialCards/SubjectCard";
 import { db } from "@/firebase";
 import { NavigateNext } from "@mui/icons-material";
-import { Box, Breadcrumbs, Grid, Typography } from "@mui/material";
-import { collection, doc, getDocs, query, where } from "firebase/firestore";
+import { Backdrop, Box, Breadcrumbs, Grid, Typography } from "@mui/material";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 
-const page = () => {
+const BranchesPage = () => {
   const route = useRouter();
   const searchParam = useSearchParams();
   const selectedClass = searchParam.get("selectedClass");
@@ -136,4 +135,18 @@ const page = () => {
   );
 };
 
-export default page;
+const PageWrapper = () => (
+  <Suspense
+    fallback={
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={true}
+      >
+        <img src={"/loader.gif"} width={100} height={100} />
+      </Backdrop>
+    }
+  >
+    <BranchesPage />
+  </Suspense>
+);
+export default PageWrapper;
