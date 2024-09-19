@@ -63,11 +63,21 @@ const ChaptersPage = () => {
         });
         // Separate topics by chapters
         const separatedTopics = chaptersArray.map((chapter) => {
+          const uniqueTopics = new Set(); // To track unique topics
+
           return {
             chapterNumber: chapter.chapterNumber,
             chapter: chapter.chapter,
             topics: topicsArray
               .filter((topic) => topic.chapterNumber === chapter.chapterNumber)
+              .filter((topic) => {
+                // Only allow unique topics
+                if (uniqueTopics.has(topic.topic)) {
+                  return false; // Skip if topic already exists
+                }
+                uniqueTopics.add(topic.topic); // Add to the set if not present
+                return true;
+              })
               .map((topic) => ({
                 topicNumber: topic.topicNumber,
                 topic: topic.topic,

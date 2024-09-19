@@ -40,6 +40,7 @@ import { db } from "@/firebase";
 import renderHTML from "react-render-html";
 import moment from "moment";
 import PDFModal from "@/components/Modals/PDFModal";
+import QuizList from "@/components/Quiz/QuizList";
 const DetailsPage = () => {
   const route = useRouter();
   const searchParam = useSearchParams();
@@ -103,6 +104,7 @@ const DetailsPage = () => {
             quizNumber: doc.data().quizNumber,
             mode: doc.data().mode,
             duration: doc.data().duration,
+            difficulty: doc.data().difficulty,
             totalQuestions: doc.data().questions.length,
           });
           items.sort((a, b) => a.quizNumber - b.quizNumber);
@@ -465,55 +467,7 @@ const DetailsPage = () => {
                   Free Quizzes
                 </Typography>
                 {quizzes ? (
-                  <List>
-                    {quizzes.map((item) => (
-                      <ListItem
-                        key={item.key}
-                        secondaryAction={
-                          <Link
-                            href={
-                              item.mode === "offline"
-                                ? {
-                                    pathname: `/classes/offquiz/${item.key}`,
-                                  }
-                                : {
-                                    pathname: `/classes/quiz/${item.key}`,
-                                  }
-                            }
-                            style={{ textDecoration: "none", color: "inherit" }}
-                          >
-                            <IconButton
-                              sx={{
-                                bgcolor: "green",
-                                color: "white",
-                                "&:hover": { bgcolor: "green" },
-                              }}
-                              edge="end"
-                              aria-label="delete"
-                            >
-                              <ArrowForwardIos sx={{ color: "white" }} />
-                            </IconButton>
-                          </Link>
-                        }
-                      >
-                        <ListItemAvatar>
-                          <Avatar
-                            sx={{
-                              bgcolor: "purple",
-                              color: "white",
-                              "&:hover": { bgcolor: "green" },
-                            }}
-                          >
-                            <Quiz sx={{ color: "white" }} />
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={`${item.quizNumber} - ${item.quizTitle} (${item.totalQuestions} questions)`}
-                          secondary={`mode: ${item.mode} - duration: ${item.duration} mins`}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
+                  <QuizList quizzes={quizzes} />
                 ) : (
                   <Typography>No quizzes available</Typography>
                 )}
