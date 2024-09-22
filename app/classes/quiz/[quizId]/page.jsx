@@ -81,17 +81,35 @@ const page = ({ params }) => {
   const quizLength = quiz.questions?.length || 0;
   const handleAnswer = (answer, id) => {
     const alreadyAttempted = attemptedQuestions.includes(id);
-    if (!alreadyAttempted) {
+    if (alreadyAttempted) {
+      const attAnswers = [...answers];
+      attAnswers.map((item) => {
+        if (item.id === id) {
+          item.answer = answer;
+        }
+      });
+      setAnswers(attAnswers);
+    } else {
       setAttemptedQuestions([...attemptedQuestions, id]);
       setAnswers([...answers, { answer, id }]);
-      if (answer === quiz.questions[current].correctOption) {
-        setResult({ ...result, score: result.score + 1 });
-      }
     }
   };
   const handleSubmit = () => {
-    const percentage = (result.score / quizLength) * 100;
-    setResult({ score: result.score, percentage: percentage.toFixed(2) });
+    let scores = 0;
+    // Iterate over user's answers
+    answers.forEach((userAnswer) => {
+      // Find the corresponding question by id
+      let question = quiz.questions.find((q) => q.id === userAnswer.id);
+
+      if (question) {
+        // Compare the user's answer with the correct answer
+        if (userAnswer.answer === question.correctOption) {
+          scores++; // Increment score if the answer is correct
+        }
+      }
+    });
+    const percentage = (scores / quizLength) * 100;
+    setResult({ ...result, percentage: percentage.toFixed(2), score: scores });
     setTimeLeft(0);
     setQuizStart(false);
   };
@@ -175,7 +193,8 @@ const page = ({ params }) => {
                     </Typography>
                   </Box>
                   <Typography variant="body1" component="div" color={"#fff"}>
-                    {current + 1} / {quizLength}
+                    {(attemptedQuestions && attemptedQuestions.length) || 0} /{" "}
+                    {quizLength}
                   </Typography>
                 </Box>
                 <Box
@@ -187,7 +206,7 @@ const page = ({ params }) => {
                   }}
                 >
                   <Typography variant="h5" component="div">
-                    {current + 1}.{" "}
+                    {current + 1}
                   </Typography>
                   <Typography variant="body1" component="div">
                     {quiz.questions[current].title}
@@ -207,16 +226,11 @@ const page = ({ params }) => {
                         my: 2,
                       },
                       attemptedQuestions.includes(quiz.questions[current].id)
-                        ? quiz.questions[current]?.correctOption ===
-                          quiz.questions[current].option1
-                          ? { border: "2px solid green" }
-                          : answers.findIndex(
-                              (item) =>
-                                item.answer ===
-                                  quiz.questions[current].option1 &&
-                                item.id === quiz.questions[current].id
-                            ) !== -1
-                          ? { border: "2px solid red" }
+                        ? answers.filter(
+                            (item) =>
+                              item.answer === quiz.questions[current].option1
+                          )?.length > 0
+                          ? { border: "2px solid gray" }
                           : { border: "none" }
                         : { border: "none" },
                     ]}
@@ -245,16 +259,11 @@ const page = ({ params }) => {
                         my: 2,
                       },
                       attemptedQuestions.includes(quiz.questions[current].id)
-                        ? quiz.questions[current]?.correctOption ===
-                          quiz.questions[current].option2
-                          ? { border: "2px solid green" }
-                          : answers.findIndex(
-                              (item) =>
-                                item.answer ===
-                                  quiz.questions[current].option2 &&
-                                item.id === quiz.questions[current].id
-                            ) !== -1
-                          ? { border: "2px solid red" }
+                        ? answers.filter(
+                            (item) =>
+                              item.answer === quiz.questions[current].option2
+                          )?.length > 0
+                          ? { border: "2px solid gray" }
                           : { border: "none" }
                         : { border: "none" },
                     ]}
@@ -283,16 +292,11 @@ const page = ({ params }) => {
                         my: 2,
                       },
                       attemptedQuestions.includes(quiz.questions[current].id)
-                        ? quiz.questions[current]?.correctOption ===
-                          quiz.questions[current].option3
-                          ? { border: "2px solid green" }
-                          : answers.findIndex(
-                              (item) =>
-                                item.answer ===
-                                  quiz.questions[current].option3 &&
-                                item.id === quiz.questions[current].id
-                            ) !== -1
-                          ? { border: "2px solid red" }
+                        ? answers.filter(
+                            (item) =>
+                              item.answer === quiz.questions[current].option3
+                          )?.length > 0
+                          ? { border: "2px solid gray" }
                           : { border: "none" }
                         : { border: "none" },
                     ]}
@@ -321,16 +325,11 @@ const page = ({ params }) => {
                         my: 2,
                       },
                       attemptedQuestions.includes(quiz.questions[current].id)
-                        ? quiz.questions[current]?.correctOption ===
-                          quiz.questions[current].option4
-                          ? { border: "2px solid green" }
-                          : answers.findIndex(
-                              (item) =>
-                                item.answer ===
-                                  quiz.questions[current].option4 &&
-                                item.id === quiz.questions[current].id
-                            ) !== -1
-                          ? { border: "2px solid red" }
+                        ? answers.filter(
+                            (item) =>
+                              item.answer === quiz.questions[current].option4
+                          )?.length > 0
+                          ? { border: "2px solid gray" }
                           : { border: "none" }
                         : { border: "none" },
                     ]}
