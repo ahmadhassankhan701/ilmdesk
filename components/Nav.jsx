@@ -59,7 +59,7 @@ function Nav(props) {
         alignItems={"center"}
         height={200}
       >
-        <img src={"/logoLight.png"} style={{ maxWidth: 200, height: "auto" }} />
+        <img src={"/ilmlogo.png"} style={{ maxWidth: 200, height: "auto" }} />
       </Box>
       <Divider sx={{ bgcolor: "white" }} />
       <List>
@@ -184,7 +184,7 @@ function Nav(props) {
             </IconButton>
             <Box sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}>
               <img
-                src={"/logoLight.png"}
+                src={"/ilmlogo.png"}
                 style={{ maxWidth: 200, height: "auto", marginLeft: 50 }}
               />
             </Box>
