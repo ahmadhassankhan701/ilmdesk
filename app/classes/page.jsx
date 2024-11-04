@@ -105,7 +105,7 @@ const page = () => {
                   my={2}
                   fontWeight={"bold"}
                 >
-                  No classes available
+                  No classes available yet
                 </Typography>
               </Box>
             </Box>
