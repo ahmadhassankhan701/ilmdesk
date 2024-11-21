@@ -17,7 +17,12 @@ import Blog from "@/components/Blogs/Blog";
 
 export default function Home() {
   return (
-    <Box>
+    <Box
+      display={"flex"}
+      justifyContent={"center"}
+      alignItems={"center"}
+      flexDirection={"column"}
+    >
       <Box
         sx={{
           backgroundImage: `url(/homeBanner.jpg)`,
@@ -28,9 +33,10 @@ export default function Home() {
           justifyContent: "center",
           flexDirection: "column",
           width: "100%",
+          alignItems: "center",
         }}
       >
-        <Box display={"flex"} alignItems={"center"} gap={10} ml={5} mb={3}>
+        <Box display={"flex"} alignItems={"center"} gap={10} width={"80%"}>
           <Box
             sx={{ display: { sm: "flex", xs: "none" } }}
             flexDirection={"column"}
@@ -158,17 +164,23 @@ export default function Home() {
           </Box>
         </Box>
       </Box>
-      <Box>
+      <Box sx={{ width: { xs: "95%", md: "80%" } }}>
         <TopHeroCards />
+        <PopularCourses />
+        <CourseCateg />
+        <Box sx={{ background: `url("/eventsBg.png")` }}>
+          <Box
+            sx={{
+              transform: "translateY(-200px)",
+            }}
+          >
+            <Achievement />
+          </Box>
+          <Event />
+        </Box>
+        <Instructor />
+        <Blog />
       </Box>
-      <PopularCourses />
-      <CourseCateg />
-      <Box sx={{ background: `url("/eventsBg.png")` }}>
-        <Achievement />
-        <Event />
-      </Box>
-      <Instructor />
-      <Blog />
     </Box>
   );
 }

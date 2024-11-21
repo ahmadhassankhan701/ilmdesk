@@ -72,12 +72,6 @@ const page = ({ params }) => {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  const breadCrumbs = [
-    { name: "Home", url: "/" },
-    { name: "Classes", url: "/classes" },
-    { name: "Chapters", url: "/classes/chapters" },
-    { name: quiz.quizTitle ? quiz.quizTitle : "Quiz", url: "#" },
-  ];
   const quizLength = quiz.questions?.length || 0;
   const handleAnswer = (answer, id) => {
     const alreadyAttempted = attemptedQuestions.includes(id);
@@ -115,49 +109,8 @@ const page = ({ params }) => {
   };
   return (
     <Box>
-      <Box
-        sx={{
-          background: `url(/ResourcesTopBanner.png)`,
-          backgroundColor: "#000000",
-          backgroundSize: "cover",
-          height: "60vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          pl: 10,
-          justifyContent: "center",
-        }}
-      >
-        <Box>
-          <Typography
-            sx={{
-              fontSize: 48,
-              fontWeight: 700,
-              color: "#FFFFFF",
-              mb: 1,
-            }}
-          >
-            {quiz.subject}
-          </Typography>
-          <Breadcrumbs
-            separator={<NavigateNext fontSize="small" />}
-            aria-label="breadcrumb"
-            sx={{ color: "#fff" }}
-          >
-            {breadCrumbs.map((item, i) => (
-              <Link
-                href={item.url}
-                key={i}
-                style={{ color: "#fff", textDecoration: "none" }}
-              >
-                <Typography>{item.name}</Typography>
-              </Link>
-            ))}
-          </Breadcrumbs>
-        </Box>
-      </Box>
       <Container mt={5}>
-        <Box mt={5}>
+        <Box mt={15}>
           {quiz ? (
             quizStart ? (
               <Box

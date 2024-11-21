@@ -132,62 +132,11 @@ const DetailsPage = () => {
       console.log(error);
     }
   };
-  const breadCrumbs = [
-    { name: "Home", url: "/" },
-    { name: "Classes", url: "/classes" },
-    { name: "Branches", url: "/classes/branches" },
-    { name: "Chapters", url: "/classes/branches/chapters" },
-    {
-      name: topic ? topic : "Topic",
-      url: "#",
-    },
-  ];
 
   return (
-    <Box>
+    <Box display={"flex"} justifyContent={"center"}>
       <PDFModal open={pdfModal} setOpen={setPdfModal} url={pdfURL} />
-      <Box
-        sx={{
-          background: `url(/ResourcesTopBanner.png)`,
-          backgroundColor: "#000000",
-          backgroundSize: "cover",
-          height: "60vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          pl: 10,
-          justifyContent: "center",
-        }}
-      >
-        <Box>
-          <Typography
-            sx={{
-              fontSize: 48,
-              fontWeight: 700,
-              color: "#FFFFFF",
-              mb: 1,
-            }}
-          >
-            {topic ? topic : "Topic"}
-          </Typography>
-          <Breadcrumbs
-            separator={<NavigateNext fontSize="small" />}
-            aria-label="breadcrumb"
-            sx={{ color: "#fff" }}
-          >
-            {breadCrumbs.map((item, i) => (
-              <Link
-                href={item.url}
-                key={i}
-                style={{ color: "#fff", textDecoration: "none" }}
-              >
-                <Typography>{item.name}</Typography>
-              </Link>
-            ))}
-          </Breadcrumbs>
-        </Box>
-      </Box>
-      <Box sx={{ mx: { xs: 1, lg: 10 } }}>
+      <Box sx={{ mx: { xs: 1, lg: 10 } }} mt={10} width={"80%"}>
         <Backdrop
           sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
           open={loading}

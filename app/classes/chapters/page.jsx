@@ -90,56 +90,9 @@ const ChaptersPage = () => {
     fetchChapters();
   }, []);
 
-  const breadCrumbs = [
-    { name: "Home", url: "/" },
-    { name: "Classes", url: "/classes" },
-    { name: "Branches", url: "/classes/branches/" },
-    { name: "Chapters", url: "#" },
-  ];
   return (
-    <Box>
-      <Box
-        sx={{
-          background: `url(/ResourcesTopBanner.png)`,
-          backgroundColor: "#000000",
-          backgroundSize: "cover",
-          height: "60vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          pl: 10,
-          justifyContent: "center",
-        }}
-      >
-        <Box>
-          <Typography
-            sx={{
-              fontSize: 48,
-              fontWeight: 700,
-              color: "#FFFFFF",
-              mb: 1,
-            }}
-          >
-            {subject}
-          </Typography>
-          <Breadcrumbs
-            separator={<NavigateNext fontSize="small" />}
-            aria-label="breadcrumb"
-            sx={{ color: "#fff" }}
-          >
-            {breadCrumbs.map((item, i) => (
-              <Link
-                href={item.url}
-                key={i}
-                style={{ color: "#fff", textDecoration: "none" }}
-              >
-                <Typography>{item.name}</Typography>
-              </Link>
-            ))}
-          </Breadcrumbs>
-        </Box>
-      </Box>
-      <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={5}>
+    <Box display={"flex"} justifyContent={"center"}>
+      <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
         <Typography
           sx={{
             fontSize: 20,

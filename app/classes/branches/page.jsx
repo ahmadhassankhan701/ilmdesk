@@ -46,49 +46,8 @@ const BranchesPage = () => {
     { name: "Branches", url: "#" },
   ];
   return (
-    <Box>
-      <Box
-        sx={{
-          background: `url(/ResourcesTopBanner.png)`,
-          backgroundColor: "#000000",
-          backgroundSize: "cover",
-          height: "60vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          pl: 10,
-          justifyContent: "center",
-        }}
-      >
-        <Box>
-          <Typography
-            sx={{
-              fontSize: 48,
-              fontWeight: 700,
-              color: "#FFFFFF",
-              mb: 1,
-            }}
-          >
-            Branches
-          </Typography>
-          <Breadcrumbs
-            separator={<NavigateNext fontSize="small" />}
-            aria-label="breadcrumb"
-            sx={{ color: "#fff" }}
-          >
-            {breadCrumbs.map((item, i) => (
-              <Link
-                href={item.url}
-                key={i}
-                style={{ color: "#fff", textDecoration: "none" }}
-              >
-                <Typography>{item.name}</Typography>
-              </Link>
-            ))}
-          </Breadcrumbs>
-        </Box>
-      </Box>
-      <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={5}>
+    <Box display={"flex"} justifyContent={"center"}>
+      <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
         <Grid container spacing={2}>
           {Object.keys(branches).length > 0 ? (
             branches.map((branch) => (
@@ -117,7 +76,7 @@ const BranchesPage = () => {
               bgcolor={"#ffffff"}
             >
               <Box sx={{ width: 400 }}>
-                <img src="/no_item.jpg" width={"100%"} height={350} />
+                <img src="/no_item.png" width={"100%"} height={350} />
                 <Typography
                   textAlign={"center"}
                   fontSize={16}
