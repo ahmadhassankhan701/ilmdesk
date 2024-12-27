@@ -21,7 +21,6 @@ const QuizFinalResult = ({ result, studentName, length, duration }) => {
           border: "none",
           py: 1,
           px: 3,
-          margin: 1,
           bgcolor: "#fff",
           width: { xs: "100%", sm: "100%", md: "100%" },
         }}
