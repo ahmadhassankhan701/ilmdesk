@@ -131,13 +131,13 @@ const PublicQuizResult = ({
                         my: 2,
                         cursor: "pointer",
                       },
-                      quiz.questions[current].option1 ===
-                      quiz.questions[current].correctOption
+                      quiz.questions[current].option1.trim() ===
+                      quiz.questions[current].correctOption.trim()
                         ? summary.summary[current].selectedOption === ""
                           ? { border: "2px solid gray" }
                           : { border: "2px solid green" }
-                        : summary.summary[current].selectedOption ===
-                          quiz.questions[current].option1
+                        : summary.summary[current].selectedOption.trim() ===
+                          quiz.questions[current].option1.trim()
                         ? { border: "2px solid red" }
                         : { border: "none" },
                     ]}
@@ -160,13 +160,13 @@ const PublicQuizResult = ({
                         my: 2,
                         cursor: "pointer",
                       },
-                      quiz.questions[current].option2 ===
-                      quiz.questions[current].correctOption
+                      quiz.questions[current].option2.trim() ===
+                      quiz.questions[current].correctOption.trim()
                         ? summary.summary[current].selectedOption === ""
                           ? { border: "2px solid gray" }
                           : { border: "2px solid green" }
-                        : summary.summary[current].selectedOption ===
-                          quiz.questions[current].option2
+                        : summary.summary[current].selectedOption.trim() ===
+                          quiz.questions[current].option2.trim()
                         ? { border: "2px solid red" }
                         : { border: "none" },
                     ]}
@@ -189,13 +189,13 @@ const PublicQuizResult = ({
                         my: 2,
                         cursor: "pointer",
                       },
-                      quiz.questions[current].option3 ==
-                      quiz.questions[current].correctOption
+                      quiz.questions[current].option3.trim() ==
+                      quiz.questions[current].correctOption.trim()
                         ? summary.summary[current].selectedOption === ""
                           ? { border: "2px solid gray" }
                           : { border: "2px solid green" }
-                        : summary.summary[current].selectedOption ===
-                          quiz.questions[current].option3
+                        : summary.summary[current].selectedOption.trim() ===
+                          quiz.questions[current].option3.trim()
                         ? { border: "2px solid red" }
                         : { border: "none" },
                     ]}
@@ -218,13 +218,13 @@ const PublicQuizResult = ({
                         my: 2,
                         cursor: "pointer",
                       },
-                      quiz.questions[current].option4 ===
-                      quiz.questions[current].correctOption
+                      quiz.questions[current].option4.trim() ===
+                      quiz.questions[current].correctOption.trim()
                         ? summary.summary[current].selectedOption === ""
                           ? { border: "2px solid gray" }
                           : { border: "2px solid green" }
-                        : summary.summary[current].selectedOption ===
-                          quiz.questions[current].option4
+                        : summary.summary[current].selectedOption.trim() ===
+                          quiz.questions[current].option4.trim()
                         ? { border: "2px solid red" }
                         : { border: "none" },
                     ]}
