@@ -672,9 +672,19 @@ const page = ({ params }) => {
       setAnswers([...answers, { answer, id }]);
     }
   };
-  const handleViewSummary = () => {
-    route.push(`/demand/summary/${quizId}?studentId=${student.studentId}`);
-  };
+  function normalizeText(text) {
+    if (typeof text === "number") {
+      text = text.toString(); // Convert numbers to strings
+    }
+
+    if (typeof text !== "string") {
+      console.error("Invalid text to normalizeText:", text); // Log invalid text for debugging
+      return ""; // Return an empty string or handle the error appropriately
+    }
+
+    let normalizedText = text.replace(/\s+/g, " ").trim(); // Normalize spaces
+    return normalizedText;
+  }
   const handleSubmit = async () => {
     try {
       setLoading(true);
@@ -686,7 +696,10 @@ const page = ({ params }) => {
 
         if (question) {
           // Compare the user's answer with the correct answer
-          if (userAnswer.answer === question.correctOption) {
+          if (
+            normalizeText(userAnswer.answer) ===
+            normalizeText(question.correctOption)
+          ) {
             scores++; // Increment score if the answer is correct
           }
         }

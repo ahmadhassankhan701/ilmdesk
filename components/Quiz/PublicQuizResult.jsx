@@ -31,7 +31,19 @@ const PublicQuizResult = ({
   }, [quizTitle]);
 
   const quizLength = quiz.questions?.length || 0;
+  function normalizeText(text) {
+    if (typeof text === "number") {
+      text = text.toString(); // Convert numbers to strings
+    }
 
+    if (typeof text !== "string") {
+      console.error("Invalid text to normalizeText:", text); // Log invalid text for debugging
+      return ""; // Return an empty string or handle the error appropriately
+    }
+
+    let normalizedText = text.replace(/\s+/g, " ").trim(); // Normalize spaces
+    return normalizedText;
+  }
   return (
     <Box>
       <Box>
@@ -131,13 +143,14 @@ const PublicQuizResult = ({
                         my: 2,
                         cursor: "pointer",
                       },
-                      quiz.questions[current].option1.trim() ===
-                      quiz.questions[current].correctOption.trim()
+                      normalizeText(quiz.questions[current].option1) ===
+                      normalizeText(quiz.questions[current].correctOption)
                         ? summary.summary[current].selectedOption === ""
                           ? { border: "2px solid gray" }
                           : { border: "2px solid green" }
-                        : summary.summary[current].selectedOption.trim() ===
-                          quiz.questions[current].option1.trim()
+                        : normalizeText(
+                            summary.summary[current].selectedOption
+                          ) === normalizeText(quiz.questions[current].option1)
                         ? { border: "2px solid red" }
                         : { border: "none" },
                     ]}
@@ -160,13 +173,14 @@ const PublicQuizResult = ({
                         my: 2,
                         cursor: "pointer",
                       },
-                      quiz.questions[current].option2.trim() ===
-                      quiz.questions[current].correctOption.trim()
+                      normalizeText(quiz.questions[current].option2) ===
+                      normalizeText(quiz.questions[current].correctOption)
                         ? summary.summary[current].selectedOption === ""
                           ? { border: "2px solid gray" }
                           : { border: "2px solid green" }
-                        : summary.summary[current].selectedOption.trim() ===
-                          quiz.questions[current].option2.trim()
+                        : normalizeText(
+                            summary.summary[current].selectedOption
+                          ) === normalizeText(quiz.questions[current].option2)
                         ? { border: "2px solid red" }
                         : { border: "none" },
                     ]}
@@ -189,13 +203,14 @@ const PublicQuizResult = ({
                         my: 2,
                         cursor: "pointer",
                       },
-                      quiz.questions[current].option3.trim() ==
-                      quiz.questions[current].correctOption.trim()
+                      normalizeText(quiz.questions[current].option3) ===
+                      normalizeText(quiz.questions[current].correctOption)
                         ? summary.summary[current].selectedOption === ""
                           ? { border: "2px solid gray" }
                           : { border: "2px solid green" }
-                        : summary.summary[current].selectedOption.trim() ===
-                          quiz.questions[current].option3.trim()
+                        : normalizeText(
+                            summary.summary[current].selectedOption
+                          ) === normalizeText(quiz.questions[current].option3)
                         ? { border: "2px solid red" }
                         : { border: "none" },
                     ]}
@@ -218,13 +233,14 @@ const PublicQuizResult = ({
                         my: 2,
                         cursor: "pointer",
                       },
-                      quiz.questions[current].option4.trim() ===
-                      quiz.questions[current].correctOption.trim()
+                      normalizeText(quiz.questions[current].option4) ===
+                      normalizeText(quiz.questions[current].correctOption)
                         ? summary.summary[current].selectedOption === ""
                           ? { border: "2px solid gray" }
                           : { border: "2px solid green" }
-                        : summary.summary[current].selectedOption.trim() ===
-                          quiz.questions[current].option4.trim()
+                        : normalizeText(
+                            summary.summary[current].selectedOption
+                          ) === normalizeText(quiz.questions[current].option4)
                         ? { border: "2px solid red" }
                         : { border: "none" },
                     ]}
@@ -243,7 +259,7 @@ const PublicQuizResult = ({
                       color: "red",
                     }}
                   >
-                    Explaination
+                    Explanation
                   </Typography>
                   <Typography>
                     {renderHTML(quiz.questions[current].explanation)}
