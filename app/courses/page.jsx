@@ -5,17 +5,20 @@ import {
   Box,
   Breadcrumbs,
   Button,
+  Card,
+  CardContent,
   Divider,
   FormControlLabel,
   Grid,
   Radio,
   RadioGroup,
+  Skeleton,
   Typography,
 } from "@mui/material";
 import Link from "next/link";
 import PCourseSlimCard from "@/components/PopularCourses/PCourseSlimCard";
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, limit, query, where } from "firebase/firestore";
 import { db } from "@/firebase";
 import { toast } from "react-toastify";
 const page = () => {
@@ -24,56 +27,43 @@ const page = () => {
     { name: "Courses", url: "#" },
   ];
   const [content, setContent] = useState([]);
-  const [curriculum, setCurriculum] = useState({
-    courses: [],
-    subjects: [],
-  });
+  const [subjects, setSubjects] = useState([]);
   const [filter, setFilter] = useState({
-    difficulty: "intermediate",
-    category: "PPSC",
-    subject: "Chemistry",
+    difficulty: "beginner",
+    subject: "chemistry",
   });
   const [loading, setLoading] = useState(false);
   useEffect(() => {
-    const fetchCurriculum = async () => {
+    const fetchSubjects = async () => {
       try {
-        const docsRef = collection(db, "Curriculum");
+        const docsRef = collection(db, "subjects");
         const snapshot = await getDocs(docsRef);
         let items = [];
-        let subjectItems = [];
         if (snapshot.size !== 0) {
           snapshot.docs.map((doc) => {
-            if (doc.data().type === "course") {
-              items.push({ key: doc.id, value: doc.data().name });
-            }
-            if (doc.data().type === "subject") {
-              subjectItems.push({ key: doc.id, value: doc.data().name });
+            if (items.includes(doc.data().name) === false) {
+              items.push(doc.data().name);
             }
           });
         }
-        setCurriculum({
-          courses: items,
-          subjects: subjectItems,
-        });
+        setSubjects(items);
       } catch (error) {
         console.log(error);
       }
     };
-    fetchCurriculum();
+    fetchSubjects();
     fetchContent();
   }, []);
   const fetchContent = async () => {
     try {
       setLoading(true);
-      const docsRef = collection(db, "Course/PPSC/Chemistry");
-      const q = query(docsRef, where("difficulty", "==", "intermediate"));
+      const docsRef = collection(db, "CourseTheory");
+      const q = query(docsRef, limit(6));
       const snapshot = await getDocs(q);
       let items = [];
       if (snapshot.size !== 0) {
         snapshot.docs.map((doc) => {
-          if (items.includes(doc.data().courseTitle) === false) {
-            items.push({ key: doc.id, ...doc.data() });
-          }
+          items.push({ key: doc.id, ...doc.data() });
         });
       }
       setContent(items);
@@ -87,16 +77,18 @@ const page = () => {
   const handleFilter = async () => {
     try {
       setLoading(true);
-      const { category, subject, difficulty } = filter;
-      const docsRef = collection(db, `Course/${category}/${subject}`);
-      const q = query(docsRef, where("difficulty", "==", difficulty));
+      const { subject, difficulty } = filter;
+      const docsRef = collection(db, "CourseTheory");
+      const q = query(
+        docsRef,
+        where("difficulty", "==", `${difficulty}`),
+        where("subject", "==", `${subject}`)
+      );
       const snapshot = await getDocs(q);
       let items = [];
       if (snapshot.size !== 0) {
         snapshot.docs.map((doc) => {
-          if (items.includes(doc.data().courseTitle) === false) {
-            items.push({ key: doc.id, ...doc.data() });
-          }
+          items.push({ key: doc.id, ...doc.data() });
         });
       }
       setContent(items);
@@ -114,7 +106,7 @@ const page = () => {
           background: `url(/ResourcesTopBanner.png)`,
           backgroundColor: "#000000",
           backgroundSize: "cover",
-          height: "60vh",
+          height: "40vh",
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
@@ -175,7 +167,7 @@ const page = () => {
               <Divider sx={{ my: 3 }} />
               <RadioGroup
                 aria-labelledby="demo-radio-buttons-group-label"
-                defaultValue="intermediate"
+                defaultValue="beginner"
                 name="radio-buttons-group"
                 onChange={(e) =>
                   setFilter({ ...filter, difficulty: e.target.value })
@@ -215,61 +207,23 @@ const page = () => {
                   color: "#001920",
                 }}
               >
-                Category
-              </Typography>
-              <Divider sx={{ my: 3 }} />
-              <RadioGroup
-                aria-labelledby="demo-radio-buttons-group-label"
-                defaultValue="PPSC"
-                name="radio-buttons-group"
-                onChange={(e) =>
-                  setFilter({ ...filter, category: e.target.value })
-                }
-              >
-                {curriculum.courses.map((course) => (
-                  <FormControlLabel
-                    key={course.key}
-                    value={course.value}
-                    control={<Radio />}
-                    label={course.value}
-                  />
-                ))}
-              </RadioGroup>
-            </Box>
-            <Box
-              sx={{
-                bgcolor: "#fff",
-                borderRadius: 1,
-                p: 2,
-                mt: 2,
-                boxShadow:
-                  "rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px",
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: "#001920",
-                }}
-              >
                 Subjects
               </Typography>
               <Divider sx={{ my: 3 }} />
               <RadioGroup
                 aria-labelledby="demo-radio-buttons-group-label"
-                defaultValue="Chemistry"
+                defaultValue="chemistry"
                 name="radio-buttons-group"
                 onChange={(e) =>
                   setFilter({ ...filter, subject: e.target.value })
                 }
               >
-                {curriculum.subjects.map((subject) => (
+                {subjects.map((subject, idx) => (
                   <FormControlLabel
-                    key={subject.key}
-                    value={subject.value}
+                    key={idx}
+                    value={subject}
                     control={<Radio />}
-                    label={subject.value}
+                    label={subject}
                   />
                 ))}
               </RadioGroup>
@@ -293,68 +247,89 @@ const page = () => {
             </Button>
           </Grid>
           <Grid item xs={12} sm={9} mt={5}>
-            <Grid container spacing={1}>
-              <Backdrop
-                sx={{
-                  color: "#fff",
-                  zIndex: (theme) => theme.zIndex.drawer + 1,
-                }}
-                open={loading}
+            {loading ? (
+              // Show Skeleton while loading
+              <Box display={"flex"} justifyContent={"center"}>
+                <Box sx={{ mx: { xs: 0, sm: 10 } }} width={"80%"}>
+                  <Grid container spacing={2}>
+                    {[...Array(3)].map((_, index) => (
+                      <Grid item xs={12} sm={6} md={4} key={index}>
+                        <Card key={index} sx={{ mb: 2 }}>
+                          <CardContent>
+                            <Skeleton
+                              variant="rectangular"
+                              width={"100%"}
+                              height={118}
+                            />
+                            <Skeleton
+                              variant="text"
+                              width={"80%"}
+                              height={30}
+                            />
+                            <Skeleton
+                              variant="text"
+                              width={"80%"}
+                              height={30}
+                            />
+                            <Skeleton
+                              variant="text"
+                              width={"50%"}
+                              height={30}
+                            />
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              </Box>
+            ) : content.length === 0 ? (
+              <Box
+                width={"100%"}
+                display={"flex"}
+                justifyContent={"center"}
+                alignItems={"center"}
               >
-                <img src={"/loader.gif"} width={100} height={100} />
-              </Backdrop>
-              {Object.keys(content).length > 0 ? (
-                content.map((item) => (
+                <Box sx={{ width: 400 }}>
+                  <img src="/no_item.png" width={"100%"} height={"auto"} />
+                  <Typography
+                    textAlign={"center"}
+                    fontSize={16}
+                    my={2}
+                    fontWeight={"bold"}
+                  >
+                    No course available yet
+                  </Typography>
+                </Box>
+              </Box>
+            ) : (
+              <Grid container spacing={1}>
+                <Backdrop
+                  sx={{
+                    color: "#fff",
+                    zIndex: (theme) => theme.zIndex.drawer + 1,
+                  }}
+                  open={loading}
+                >
+                  <img src={"/loader.gif"} />
+                </Backdrop>
+                {content.map((item) => (
                   <Grid key={item.key} item xs={12} sm={6} lg={4}>
                     <Link
                       style={{ textDecoration: "none" }}
                       href={{
                         pathname: "/courses/details",
                         query: {
-                          courseTitle: item.courseTitle,
-                          course: item.course,
-                          subject: item.subject,
+                          id: item.key,
                         },
                       }}
                     >
-                      <PCourseSlimCard
-                        image={item.image ? item.image : "/courseCategImg.jpg"}
-                        category={item.course}
-                        title={item.courseTitle}
-                        number_of_ratings={item.ratings?.length}
-                        rating={item.ratings?.length > 0 ? 4 : 0}
-                        cost={item.cost}
-                      />
+                      <PCourseSlimCard data={item} />
                     </Link>
                   </Grid>
-                ))
-              ) : (
-                <Box
-                  width={"100%"}
-                  display={"flex"}
-                  justifyContent={"center"}
-                  alignItems={"center"}
-                  bgcolor={"#ffffff"}
-                >
-                  <Box sx={{ width: { xs: "100%", sm: 400 } }}>
-                    <img
-                      src="/no_item.jpg"
-                      width={"100%"}
-                      height={350}
-                      style={{ objectFit: "contain", objectPosition: "center" }}
-                    />
-                    <Typography
-                      textAlign={"center"}
-                      fontSize={16}
-                      my={2}
-                      fontWeight={"bold"}
-                    >
-                      No content available
-                    </Typography>
-                  </Box>
-                </Box>
-              )}
-            </Grid>
+                ))}
+              </Grid>
+            )}
           </Grid>
         </Grid>
       </Box>

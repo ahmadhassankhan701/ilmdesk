@@ -39,7 +39,55 @@ const QuizList = ({ quizzes }) => {
 
     quizzes && classifyQuizzes();
   }, [quizzes]);
-
+  const quiz = (item) => {
+    return (
+      <ListItem
+        key={item.key}
+        secondaryAction={
+          <Link
+            href={
+              item.mode === "offline"
+                ? {
+                    pathname: `/classes/offquiz/${item.key}`,
+                  }
+                : {
+                    pathname: `/classes/quiz/${item.key}`,
+                  }
+            }
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
+            <IconButton
+              sx={{
+                bgcolor: "green",
+                color: "white",
+                "&:hover": { bgcolor: "green" },
+              }}
+              edge="end"
+              aria-label="delete"
+            >
+              <ArrowForwardIos sx={{ color: "white" }} />
+            </IconButton>
+          </Link>
+        }
+      >
+        <ListItemAvatar>
+          <Avatar
+            sx={{
+              bgcolor: "purple",
+              color: "white",
+              "&:hover": { bgcolor: "green" },
+            }}
+          >
+            <Quiz sx={{ color: "white" }} />
+          </Avatar>
+        </ListItemAvatar>
+        <ListItemText
+          primary={`${item.quizNumber} - ${item.quizTitle}`}
+          secondary={`mode: ${item.mode} - duration: ${item.duration} mins`}
+        />
+      </ListItem>
+    );
+  };
   return (
     <Box>
       <Typography
@@ -52,53 +100,7 @@ const QuizList = ({ quizzes }) => {
       </Typography>
       <List>
         {beginners ? (
-          beginners.map((item) => (
-            <ListItem
-              key={item.key}
-              secondaryAction={
-                <Link
-                  href={
-                    item.mode === "offline"
-                      ? {
-                          pathname: `/classes/offquiz/${item.key}`,
-                        }
-                      : {
-                          pathname: `/classes/quiz/${item.key}`,
-                        }
-                  }
-                  style={{ textDecoration: "none", color: "inherit" }}
-                >
-                  <IconButton
-                    sx={{
-                      bgcolor: "green",
-                      color: "white",
-                      "&:hover": { bgcolor: "green" },
-                    }}
-                    edge="end"
-                    aria-label="delete"
-                  >
-                    <ArrowForwardIos sx={{ color: "white" }} />
-                  </IconButton>
-                </Link>
-              }
-            >
-              <ListItemAvatar>
-                <Avatar
-                  sx={{
-                    bgcolor: "purple",
-                    color: "white",
-                    "&:hover": { bgcolor: "green" },
-                  }}
-                >
-                  <Quiz sx={{ color: "white" }} />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={`${item.quizNumber} - ${item.quizTitle} (${item.totalQuestions} questions)`}
-                secondary={`mode: ${item.mode} - duration: ${item.duration} mins`}
-              />
-            </ListItem>
-          ))
+          beginners.map((item) => quiz(item))
         ) : (
           <ListItem>No quizzes for beginners</ListItem>
         )}
@@ -113,53 +115,7 @@ const QuizList = ({ quizzes }) => {
       </Typography>
       <List>
         {Object.keys(intermediates).length > 0 ? (
-          intermediates.map((item) => (
-            <ListItem
-              key={item.key}
-              secondaryAction={
-                <Link
-                  href={
-                    item.mode === "offline"
-                      ? {
-                          pathname: `/classes/offquiz/${item.key}`,
-                        }
-                      : {
-                          pathname: `/classes/quiz/${item.key}`,
-                        }
-                  }
-                  style={{ textDecoration: "none", color: "inherit" }}
-                >
-                  <IconButton
-                    sx={{
-                      bgcolor: "green",
-                      color: "white",
-                      "&:hover": { bgcolor: "green" },
-                    }}
-                    edge="end"
-                    aria-label="delete"
-                  >
-                    <ArrowForwardIos sx={{ color: "white" }} />
-                  </IconButton>
-                </Link>
-              }
-            >
-              <ListItemAvatar>
-                <Avatar
-                  sx={{
-                    bgcolor: "purple",
-                    color: "white",
-                    "&:hover": { bgcolor: "green" },
-                  }}
-                >
-                  <Quiz sx={{ color: "white" }} />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={`${item.quizNumber} - ${item.quizTitle} (${item.totalQuestions} questions)`}
-                secondary={`mode: ${item.mode} - duration: ${item.duration} mins`}
-              />
-            </ListItem>
-          ))
+          intermediates.map((item) => quiz(item))
         ) : (
           <ListItem>No quizzes for Intermediates</ListItem>
         )}
@@ -174,53 +130,7 @@ const QuizList = ({ quizzes }) => {
       </Typography>
       <List>
         {Object.keys(experts).length > 0 ? (
-          experts.map((item) => (
-            <ListItem
-              key={item.key}
-              secondaryAction={
-                <Link
-                  href={
-                    item.mode === "offline"
-                      ? {
-                          pathname: `/classes/offquiz/${item.key}`,
-                        }
-                      : {
-                          pathname: `/classes/quiz/${item.key}`,
-                        }
-                  }
-                  style={{ textDecoration: "none", color: "inherit" }}
-                >
-                  <IconButton
-                    sx={{
-                      bgcolor: "green",
-                      color: "white",
-                      "&:hover": { bgcolor: "green" },
-                    }}
-                    edge="end"
-                    aria-label="delete"
-                  >
-                    <ArrowForwardIos sx={{ color: "white" }} />
-                  </IconButton>
-                </Link>
-              }
-            >
-              <ListItemAvatar>
-                <Avatar
-                  sx={{
-                    bgcolor: "purple",
-                    color: "white",
-                    "&:hover": { bgcolor: "green" },
-                  }}
-                >
-                  <Quiz sx={{ color: "white" }} />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={`${item.quizNumber} - ${item.quizTitle} (${item.totalQuestions} questions)`}
-                secondary={`mode: ${item.mode} - duration: ${item.duration} mins`}
-              />
-            </ListItem>
-          ))
+          experts.map((item) => quiz(item))
         ) : (
           <ListItem>No quizzes for Experts</ListItem>
         )}

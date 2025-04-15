@@ -1,8 +1,15 @@
 "use client";
 import BranchCard from "@/components/SpecialCards/BranchCard";
 import { db } from "@/firebase";
-import { NavigateNext } from "@mui/icons-material";
-import { Backdrop, Box, Breadcrumbs, Grid, Typography } from "@mui/material";
+import {
+  Backdrop,
+  Box,
+  Card,
+  CardContent,
+  Grid,
+  Skeleton,
+  Typography,
+} from "@mui/material";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,85 +18,100 @@ import React, { Suspense, useEffect, useState } from "react";
 const BranchesPage = () => {
   const route = useRouter();
   const searchParam = useSearchParams();
-  const selectedClass = searchParam.get("selectedClass");
-  const subject = searchParam.get("subject");
+  const subjectId = searchParam.get("id");
   const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     const fetchBranches = async () => {
-      if (!selectedClass || !subject) {
+      if (!subjectId) {
         route.back();
         return;
       }
-      const docsRef = collection(db, `Quiz`);
-      const q = query(
-        docsRef,
-        where("class", "==", selectedClass),
-        where("subject", "==", subject)
-      );
+      setLoading(true);
+      const docsRef = collection(db, "branches");
+      const q = query(docsRef, where("subjectID", "==", subjectId));
       const snapshot = await getDocs(q);
       let branchesArray = [];
       if (snapshot.size !== 0) {
         snapshot.forEach((doc) => {
-          if (branchesArray.includes(doc.data().branch) == false) {
-            branchesArray.push(doc.data().branch);
-          }
+          branchesArray.push({ key: doc.id, name: doc.data().name });
         });
         setBranches(branchesArray);
       }
+      setLoading(false);
     };
     fetchBranches();
   }, []);
 
-  const breadCrumbs = [
-    { name: "Home", url: "/" },
-    { name: "Classes", url: "/classes/" },
-    { name: "Branches", url: "#" },
-  ];
   return (
-    <Box display={"flex"} justifyContent={"center"}>
-      <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
-        <Grid container spacing={2}>
-          {Object.keys(branches).length > 0 ? (
-            branches.map((branch) => (
-              <Grid item xs={12} sm={6} md={4} key={branch}>
-                <Link
-                  href={{
-                    pathname: "/classes/chapters",
-                    query: { selectedClass, subject, branch },
-                  }}
-                  key={branch}
-                  style={{ textDecoration: "none", color: "inherit" }}
-                >
-                  <BranchCard
-                    image="/Currica/chemistry_subject.jpg"
-                    title={branch}
-                  />
-                </Link>
-              </Grid>
-            ))
-          ) : (
-            <Box
-              width={"100%"}
-              display={"flex"}
-              justifyContent={"center"}
-              alignItems={"center"}
-              bgcolor={"#ffffff"}
+    <Box>
+      {loading ? (
+        // Show Skeleton while loading
+        <Box display={"flex"} justifyContent={"center"}>
+          <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
+            <Grid container spacing={2}>
+              {[...Array(3)].map((_, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <Card key={index} sx={{ mb: 2 }}>
+                    <CardContent>
+                      <Skeleton
+                        variant="rectangular"
+                        width={"100%"}
+                        height={118}
+                      />
+                      <Skeleton variant="text" width={"80%"} height={30} />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        </Box>
+      ) : branches.length === 0 ? (
+        <Box
+          width={"100%"}
+          display={"flex"}
+          justifyContent={"center"}
+          alignItems={"center"}
+          mt={15}
+        >
+          <Box sx={{ width: 400 }}>
+            <img src="/no_item.png" width={"100%"} height={"auto"} />
+            <Typography
+              textAlign={"center"}
+              fontSize={16}
+              my={2}
+              fontWeight={"bold"}
             >
-              <Box sx={{ width: 400 }}>
-                <img src="/no_item.png" width={"100%"} height={350} />
-                <Typography
-                  textAlign={"center"}
-                  fontSize={16}
-                  my={2}
-                  fontWeight={"bold"}
-                >
-                  No branches found
-                </Typography>
-              </Box>
-            </Box>
-          )}
-        </Grid>
-      </Box>
+              No branches available yet
+            </Typography>
+          </Box>
+        </Box>
+      ) : (
+        <Box display={"flex"} justifyContent={"center"}>
+          <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
+            <Grid container spacing={2}>
+              {branches.map((branch) => (
+                <Grid item xs={12} sm={6} md={4} key={branch.key}>
+                  <Link
+                    href={{
+                      pathname: "/classes/chapters",
+                      query: { id: branch.key },
+                    }}
+                    key={branch.key}
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    <BranchCard
+                      image="/Currica/chemistry_subject.jpg"
+                      title={branch.name}
+                    />
+                  </Link>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 };

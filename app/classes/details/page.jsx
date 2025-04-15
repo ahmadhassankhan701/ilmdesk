@@ -44,38 +44,28 @@ import QuizList from "@/components/Quiz/QuizList";
 const DetailsPage = () => {
   const route = useRouter();
   const searchParam = useSearchParams();
-  const selectedClass = searchParam.get("selectedClass");
-  const subject = searchParam.get("subject");
-  const branch = searchParam.get("branch");
-  const chapter = searchParam.get("chapter");
-  const topic = searchParam.get("topic");
+  const topicId = searchParam.get("id");
   const [content, setContent] = useState(null);
   const [quizzes, setQuizzes] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pdfModal, setPdfModal] = useState(false);
   const [pdfURL, setPdfURL] = useState("");
   useEffect(() => {
-    if (!selectedClass || !branch || !chapter || !subject || !topic) {
+    if (!topicId) {
       route.back();
       return;
     } else {
       fetchContent();
       fetchQuizList();
     }
-  }, []);
+  }, [topicId]);
   const fetchContent = async () => {
     try {
-      const docRef = collection(db, `Class`);
-      const q = query(
-        docRef,
-        where("class", "==", selectedClass),
-        where("subject", "==", subject),
-        where("branch", "==", branch),
-        where("chapter", "==", chapter),
-        where("topic", "==", topic)
-      );
-      const fetchData = await fetchRequest(q);
-      setContent(fetchData);
+      const docRef = doc(db, "ClassesTheory", topicId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setContent({ key: docSnap.id, ...docSnap.data() });
+      }
     } catch (error) {
       setLoading(false);
       console.log(error);
@@ -85,48 +75,19 @@ const DetailsPage = () => {
   const fetchQuizList = async () => {
     try {
       setLoading(true);
-      const docsRef = collection(db, `Quiz`);
-      const q = query(
-        docsRef,
-        where("class", "==", selectedClass),
-        where("subject", "==", subject),
-        where("branch", "==", branch),
-        where("chapter", "==", chapter),
-        where("topic", "==", topic)
-      );
+      const quizzesRef = collection(db, "ClassQuizzes");
+      const q = query(quizzesRef, where("topicId", "==", topicId));
       const querySnapshot = await getDocs(q);
-      let items = [];
-      if (querySnapshot.size !== 0) {
-        querySnapshot.docs.map((doc) => {
-          items.push({
-            key: doc.id,
-            quizTitle: doc.data().quizTitle,
-            quizNumber: doc.data().quizNumber,
-            mode: doc.data().mode,
-            duration: doc.data().duration,
-            difficulty: doc.data().difficulty,
-            totalQuestions: doc.data().questions.length,
-          });
-          items.sort((a, b) => a.quizNumber - b.quizNumber);
-        });
-      }
-      setQuizzes(items);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  const fetchRequest = async (query) => {
-    try {
-      setLoading(true);
-      const snapshot = await getDocs(query);
-      if (snapshot.empty) {
+      if (querySnapshot.size == 0) {
         setLoading(false);
-        return null;
+        return;
       }
-      const docId = snapshot.docs[0].id;
-      const docData = snapshot.docs[0].data();
+      let quizzesData = [];
+      querySnapshot.forEach((doc) => {
+        quizzesData.push({ key: doc.id, ...doc.data() });
+      });
+      setQuizzes(quizzesData);
       setLoading(false);
-      return { key: docId, ...docData };
     } catch (error) {
       setLoading(false);
       console.log(error);
@@ -141,7 +102,7 @@ const DetailsPage = () => {
           sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
           open={loading}
         >
-          <img src={"/loader.gif"} width={100} height={100} />
+          <img src={"/loader.gif"} />
         </Backdrop>
         {content || quizzes ? (
           <Grid container spacing={2}>
@@ -158,12 +119,12 @@ const DetailsPage = () => {
                   component={"div"}
                   sx={{ fontSize: 16, color: "#001920", mt: 1 }}
                 >
-                  {content && content.desc
-                    ? renderHTML(content.desc)
+                  {content && content.theory
+                    ? renderHTML(content.theory)
                     : "No theory yet"}
                 </Typography>
               </Box>
-              {content && content.contentFiles?.length > 0 && (
+              {content && content.pdfs?.length > 0 && (
                 <Box sx={{ mt: 5 }}>
                   <Typography
                     variant="h6"
@@ -172,7 +133,7 @@ const DetailsPage = () => {
                     Content Files
                   </Typography>
                   <Box>
-                    {content.contentFiles.map((file, i) => (
+                    {content.pdfs.map((file, i) => (
                       <Box
                         key={i}
                         sx={{
@@ -218,7 +179,7 @@ const DetailsPage = () => {
                   </Box>
                 </Box>
               )}
-              {content && content.youtube?.length > 0 && (
+              {content && content.youtubeLinks?.length > 0 && (
                 <Box sx={{ mt: 5 }}>
                   <Typography
                     variant="h6"
@@ -228,7 +189,7 @@ const DetailsPage = () => {
                   </Typography>
                   <Box>
                     <Grid container spacing={1} sx={{ padding: 1, mb: 1 }}>
-                      {content.youtube.map((item, index) => (
+                      {content.youtubeLinks.map((item, index) => (
                         <Grid item xs={12} sm={6} key={`quest-${index}`}>
                           <Box
                             sx={{
@@ -244,8 +205,8 @@ const DetailsPage = () => {
                           >
                             <CardMedia
                               component="iframe"
-                              title={"Youtube Lecture"}
-                              src={item}
+                              title={`YouTube Video ${index + 1}`}
+                              src={`https://www.youtube.com/embed/${item}`}
                               height={250}
                               allowFullScreen
                             />
@@ -429,22 +390,17 @@ const DetailsPage = () => {
             display={"flex"}
             justifyContent={"center"}
             alignItems={"center"}
-            bgcolor={"#ffffff"}
+            mt={10}
           >
-            <Box sx={{ width: { xs: "100%", sm: 400 } }}>
-              <img
-                src="/no_item.jpg"
-                width={"100%"}
-                height={350}
-                style={{ objectFit: "contain", objectPosition: "center" }}
-              />
+            <Box sx={{ width: 400 }}>
+              <img src="/no_item.png" width={"100%"} height={"auto"} />
               <Typography
                 textAlign={"center"}
                 fontSize={16}
                 my={2}
                 fontWeight={"bold"}
               >
-                No content available
+                No content available yet
               </Typography>
             </Box>
           </Box>

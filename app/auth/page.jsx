@@ -1,12 +1,18 @@
 "use client";
-import { Box, Typography, Button, Grid, TextField } from "@mui/material";
-import React from "react";
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  TextField,
+  Backdrop,
+} from "@mui/material";
+import React, { Suspense } from "react";
 import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { styled } from "@mui/material/styles";
-import { Google } from "@mui/icons-material";
 import {
   signInWithPopup,
   GoogleAuthProvider,
@@ -44,8 +50,10 @@ const StyledTextField = styled(TextField)({
     },
   },
 });
-const page = () => {
+const LoginPage = () => {
   const route = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
   const { setState } = useAuth();
   const loaderImage = "/loader.gif";
   const googleProvider = new GoogleAuthProvider();
@@ -96,7 +104,7 @@ const page = () => {
           expires: 7,
         });
         setLoading(false);
-        route.push("/dashboard");
+        route.push(redirectTo);
       } else {
         // await sendEmailVerification(auth.currentUser);
         await signOut(auth);
@@ -166,7 +174,7 @@ const page = () => {
         expires: 7,
       });
       setLoading(false);
-      route.push("/dashboard");
+      route.push(redirectTo);
     } catch (error) {
       setLoading(false);
       toast.error("Something went wrong");
@@ -177,47 +185,11 @@ const page = () => {
     <Box>
       <Box
         sx={{
-          background: `url(/ResourcesTopBanner.png)`,
-          backgroundColor: "#000000",
-          backgroundSize: "cover",
-          height: "50vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          pl: 10,
-          justifyContent: "center",
-        }}
-      >
-        <Box>
-          <Typography
-            sx={{
-              fontSize: 48,
-              fontWeight: 700,
-              color: "#FFFFFF",
-              mb: 1,
-            }}
-          >
-            Login
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: 25,
-              fontWeight: 500,
-              color: "#FFFFFF",
-              mb: 1,
-            }}
-          >
-            Login to avail our best services
-          </Typography>
-        </Box>
-      </Box>
-      <Box
-        sx={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          mt: 5,
+          mt: 15,
         }}
       >
         {loading && (
@@ -234,7 +206,7 @@ const page = () => {
               alignItems: "center",
             }}
           >
-            <img src={loaderImage} width={100} height={100} />
+            <img src={loaderImage} />
           </Box>
         )}
         <Grid
@@ -249,7 +221,6 @@ const page = () => {
             sm={6}
             lg={4}
             border={"none"}
-            padding={5}
             bgcolor={"#fff"}
             borderRadius={2}
             sx={{
@@ -257,111 +228,128 @@ const page = () => {
             }}
             mx={1}
           >
-            <Typography
-              variant={"h5"}
-              textAlign={"center"}
-              mt={1}
-              mb={5}
-              fontWeight={"bold"}
-              color={"#212333"}
-            >
-              Student Login
-            </Typography>
-            <StyledTextField
-              id="outlined-basic"
-              label="Your email"
-              variant="outlined"
-              fullWidth
-              sx={{ my: 1 }}
-              InputProps={{
-                style: {
-                  color: "#A0AAB4",
-                },
-              }}
-              onChange={(e) => handleChange("email", e.target.value)}
-            />
-            <StyledTextField
-              id="outlined-basics"
-              label="Password"
-              variant="outlined"
-              fullWidth
-              sx={{
-                my: 1,
-              }}
-              InputProps={{
-                style: {
-                  color: "#A0AAB4",
-                },
-              }}
-              onChange={(e) => handleChange("password", e.target.value)}
-            />
-            <Button
-              variant="contained"
-              sx={{
-                color: "#fff",
-                backgroundColor: "#ff3158",
-                my: 1,
-                "&:hover": { backgroundColor: "#f50366" },
-              }}
-              fullWidth
-              onClick={handleSubmit}
-            >
-              Submit
-            </Button>
             <Box
-              display={"flex"}
-              justifyContent={"flex-end"}
-              alignItems={"center"}
-              my={2}
-            >
-              <Typography textAlign={"center"} alignSelf={"flex-end"}>
-                Not a user?{" "}
-                <Link
-                  href={"/auth/register"}
-                  style={{ textDecoration: "none", color: "red" }}
-                >
-                  Register now
-                </Link>
-              </Typography>
-            </Box>
-            <Typography
-              variant="p"
               sx={{
-                fontSize: 16,
-                fontWeight: 700,
-                lineHeight: 1,
-                color: "gray",
+                background: `url(/ResourcesTopBanner.png)`,
+                backgroundColor: "#000000",
+                backgroundSize: "cover",
+                height: "20vh",
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 3,
-                textAlign: "center",
+                borderRadius: 2,
               }}
             >
-              <span
-                style={{
-                  width: "42%",
-                  height: 2,
-                  marginBottom: 5,
-                  display: "inline-block",
-                  background: "gray",
+              <Typography
+                variant={"h5"}
+                textAlign={"center"}
+                mt={1}
+                mb={5}
+                fontWeight={"bold"}
+                color={"#fff"}
+              >
+                Student Login
+              </Typography>
+            </Box>
+            <Box padding={5}>
+              <StyledTextField
+                id="outlined-basic"
+                label="Your email"
+                variant="outlined"
+                fullWidth
+                sx={{ my: 1 }}
+                InputProps={{
+                  style: {
+                    color: "#A0AAB4",
+                  },
                 }}
-              ></span>
-              OR
-              <span
-                style={{
-                  width: "42%",
-                  height: 2,
-                  marginBottom: 5,
-                  display: "inline-block",
-                  background: "gray",
+                onChange={(e) => handleChange("email", e.target.value)}
+              />
+              <StyledTextField
+                id="outlined-basics"
+                label="Password"
+                variant="outlined"
+                fullWidth
+                sx={{
+                  my: 1,
                 }}
-              ></span>
-            </Typography>
-            <GoogleSignInButton
-              title={"Sign in with Google"}
-              onClick={googleLogin}
-            />
+                InputProps={{
+                  style: {
+                    color: "#A0AAB4",
+                  },
+                  type: "password",
+                }}
+                onChange={(e) => handleChange("password", e.target.value)}
+              />
+              <Button
+                variant="contained"
+                sx={{
+                  color: "#fff",
+                  backgroundColor: "#ff3158",
+                  my: 1,
+                  "&:hover": { backgroundColor: "#f50366" },
+                }}
+                fullWidth
+                onClick={handleSubmit}
+              >
+                Submit
+              </Button>
+              <Box
+                display={"flex"}
+                justifyContent={"flex-end"}
+                alignItems={"center"}
+                my={2}
+              >
+                <Typography textAlign={"center"} alignSelf={"flex-end"}>
+                  Not a user?{" "}
+                  <Link
+                    href={`/auth/register?redirect=${redirectTo}`}
+                    style={{ textDecoration: "none", color: "red" }}
+                  >
+                    Register now
+                  </Link>
+                </Typography>
+              </Box>
+              <Typography
+                variant="p"
+                sx={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  color: "gray",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 3,
+                  textAlign: "center",
+                }}
+              >
+                <span
+                  style={{
+                    width: "42%",
+                    height: 2,
+                    marginBottom: 5,
+                    display: "inline-block",
+                    background: "gray",
+                  }}
+                ></span>
+                OR
+                <span
+                  style={{
+                    width: "42%",
+                    height: 2,
+                    marginBottom: 5,
+                    display: "inline-block",
+                    background: "gray",
+                  }}
+                ></span>
+              </Typography>
+              <GoogleSignInButton
+                title={"Sign in with Google"}
+                onClick={googleLogin}
+              />
+            </Box>
           </Grid>
         </Grid>
       </Box>
@@ -369,4 +357,18 @@ const page = () => {
   );
 };
 
-export default page;
+const PageWrapper = () => (
+  <Suspense
+    fallback={
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={true}
+      >
+        <img src={"/loader.gif"} width={100} height={100} />
+      </Backdrop>
+    }
+  >
+    <LoginPage />
+  </Suspense>
+);
+export default PageWrapper;

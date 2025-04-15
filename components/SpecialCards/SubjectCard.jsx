@@ -63,9 +63,9 @@ const SubjectCard = ({
             <Link
               href={{
                 pathname: "/classes/branches",
-                query: { selectedClass: title, subject: subject },
+                query: { id: subject.key },
               }}
-              key={subject}
+              key={subject.key}
               style={{ textDecoration: "none" }}
             >
               <Box
@@ -88,7 +88,7 @@ const SubjectCard = ({
                     textAlign: "left",
                   }}
                 >
-                  {subject}
+                  {subject.name}
                 </Typography>
                 <ChevronRightOutlined sx={{ color: "gray" }} />
               </Box>

@@ -1,12 +1,28 @@
 "use client";
 import { db } from "@/firebase";
-import { ExpandMore, NavigateNext } from "@mui/icons-material";
+import {
+  ExpandMore,
+  Folder,
+  NavigateNext,
+  Topic,
+  TopicOutlined,
+  TopicRounded,
+} from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Box,
   Breadcrumbs,
+  Card,
+  CardContent,
+  Grid,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Skeleton,
   Typography,
 } from "@mui/material";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -18,154 +34,162 @@ import { Backdrop } from "@mui/material";
 const ChaptersPage = () => {
   const route = useRouter();
   const searchParam = useSearchParams();
-  const selectedClass = searchParam.get("selectedClass");
-  const subject = searchParam.get("subject");
-  const branch = searchParam.get("branch");
+  const branchId = searchParam.get("id");
   const [chapters, setChapters] = useState([]);
-  useEffect(() => {
-    const fetchChapters = async () => {
-      if (!selectedClass || !subject || !branch) {
-        route.back();
-        return;
-      }
-      const docsRef = collection(db, `Quiz`);
-      const q = query(
-        docsRef,
-        where("class", "==", selectedClass),
-        where("subject", "==", subject),
-        where("branch", "==", branch)
-      );
-      const snapshot = await getDocs(q);
-      const chaptersArray = [];
-      const topicsArray = [];
-      if (snapshot.size !== 0) {
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          const chapterNumber = data.chapterNumber;
-          const chapter = data.chapter;
-          const topicNumber = data.topicNumber;
-          const topic = data.topic;
-          // Add chapter to chapters array if it doesn't already exist
-          if (!chaptersArray.some((ch) => ch.chapterNumber === chapterNumber)) {
-            chaptersArray.push({ chapterNumber, chapter });
-          }
-          // Add topic to topics array
-          topicsArray.push({ chapterNumber, topicNumber, topic });
-        });
-        // Sort chapters by chapterNumber
-        chaptersArray.sort((a, b) => a.chapterNumber - b.chapterNumber);
-        // Sort topics by chapterNumber and topicNumber
-        topicsArray.sort((a, b) => {
-          if (a.chapterNumber === b.chapterNumber) {
-            return a.topicNumber - b.topicNumber;
-          }
-          return a.chapterNumber - b.chapterNumber;
-        });
-        // Separate topics by chapters
-        const separatedTopics = chaptersArray.map((chapter) => {
-          const uniqueTopics = new Set(); // To track unique topics
+  const [loading, setLoading] = useState(false);
+  const fetchChapters = async () => {
+    if (!branchId) {
+      route.back();
+      return;
+    }
+    try {
+      setLoading(true);
+      const docsRef = collection(db, "chapters");
+      const q = query(docsRef, where("branchID", "==", branchId));
+      const chaptersSnapshot = await getDocs(q);
+      const topicsSnapshot = await getDocs(collection(db, "topics"));
 
-          return {
-            chapterNumber: chapter.chapterNumber,
-            chapter: chapter.chapter,
-            topics: topicsArray
-              .filter((topic) => topic.chapterNumber === chapter.chapterNumber)
-              .filter((topic) => {
-                // Only allow unique topics
-                if (uniqueTopics.has(topic.topic)) {
-                  return false; // Skip if topic already exists
-                }
-                uniqueTopics.add(topic.topic); // Add to the set if not present
-                return true;
-              })
-              .map((topic) => ({
-                topicNumber: topic.topicNumber,
-                topic: topic.topic,
-              })),
-          };
-        });
-        setChapters(separatedTopics);
-      }
-    };
-    fetchChapters();
+      // Convert snapshots to arrays
+      const chaptersArray = chaptersSnapshot.docs.map((doc) => ({
+        key: doc.id,
+        ...doc.data(),
+      }));
+
+      const topicsArray = topicsSnapshot.docs.map((doc) => ({
+        key: doc.id,
+        ...doc.data(),
+      }));
+
+      // Create structured array
+      const structuredData = chaptersArray.map((chapter) => ({
+        chapterId: chapter.key,
+        chapterName: chapter.name,
+        topics: topicsArray.filter((topic) => topic.chapterID === chapter.key),
+      }));
+      setLoading(false);
+      return structuredData;
+    } catch (error) {
+      setLoading(false);
+      console.error("Error fetching classes and subjects:", error);
+    }
+  };
+  useEffect(() => {
+    fetchChapters().then((data) => {
+      setChapters(data);
+    });
   }, []);
 
   return (
-    <Box display={"flex"} justifyContent={"center"}>
-      <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
-        <Typography
-          sx={{
-            fontSize: 20,
-            fontWeight: 800,
-            color: "gray",
-            mt: 1,
-          }}
-        >
-          {chapters.length} chapters - {selectedClass} - {subject}
-        </Typography>
-        <Box mt={5}>
-          {Object.keys(chapters).length > 0 ? (
-            chapters.map((item) => (
-              <Accordion key={item.chapterNumber}>
-                <AccordionSummary
-                  expandIcon={<ExpandMore />}
-                  aria-controls="panel2-content"
-                  id="panel2-header"
-                >
-                  {item.chapterNumber} - {item.chapter}
-                </AccordionSummary>
-                {item.topics.map((topic) => (
-                  <AccordionDetails
-                    key={topic.topicNumber}
-                    sx={{ cursor: "pointer" }}
-                  >
-                    <Link
-                      href={{
-                        pathname: "/classes/details",
-                        query: {
-                          selectedClass: selectedClass,
-                          subject: subject,
-                          branch: branch,
-                          chapter: item.chapter,
-                          topic: topic.topic,
-                        },
-                      }}
-                      style={{
-                        textDecoration: "none",
-                        color: "inherit",
-                      }}
-                    >
-                      <Typography>
-                        {topic.topicNumber} - {topic.topic}
-                      </Typography>
-                    </Link>
-                  </AccordionDetails>
-                ))}
-              </Accordion>
-            ))
-          ) : (
-            <Box
-              width={"100%"}
-              display={"flex"}
-              justifyContent={"center"}
-              alignItems={"center"}
-              bgcolor={"#ffffff"}
-            >
-              <Box sx={{ width: 400 }}>
-                <img src="/no_item.jpg" width={"100%"} height={350} />
-                <Typography
-                  textAlign={"center"}
-                  fontSize={16}
-                  my={2}
-                  fontWeight={"bold"}
-                >
-                  No chapters available
-                </Typography>
-              </Box>
-            </Box>
-          )}
+    <Box>
+      {loading ? (
+        // Show Skeleton while loading
+        <Box display={"flex"} justifyContent={"center"}>
+          <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
+            <Grid container spacing={2}>
+              {[...Array(3)].map((_, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <Card key={index} sx={{ mb: 2 }}>
+                    <CardContent>
+                      <Skeleton
+                        variant="rectangular"
+                        width={"100%"}
+                        height={118}
+                      />
+                      <Skeleton variant="text" width={"80%"} height={30} />
+                      <Skeleton variant="text" width={"80%"} height={30} />
+                      <Skeleton variant="text" width={"50%"} height={30} />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
         </Box>
-      </Box>
+      ) : chapters.length === 0 ? (
+        <Box
+          width={"100%"}
+          display={"flex"}
+          justifyContent={"center"}
+          alignItems={"center"}
+          mt={15}
+        >
+          <Box sx={{ width: 400 }}>
+            <img src="/no_item.png" width={"100%"} height={"auto"} />
+            <Typography
+              textAlign={"center"}
+              fontSize={16}
+              my={2}
+              fontWeight={"bold"}
+            >
+              No chapters available yet
+            </Typography>
+          </Box>
+        </Box>
+      ) : (
+        <Box display={"flex"} justifyContent={"center"}>
+          <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
+            <Typography
+              sx={{
+                fontSize: 20,
+                fontWeight: 800,
+                color: "gray",
+                mt: 1,
+              }}
+            >
+              {chapters.length} chapters
+            </Typography>
+            <Box mt={5}>
+              {chapters.map((item) => (
+                <Accordion key={item.chapterId}>
+                  <AccordionSummary
+                    expandIcon={<ExpandMore />}
+                    aria-controls="panel2-content"
+                    id="panel2-header"
+                  >
+                    {item.chapterName}
+                  </AccordionSummary>
+                  {item.topics.length === 0 ? (
+                    <AccordionDetails>
+                      <Typography fontSize={15} color={"gray"}>
+                        No topic here
+                      </Typography>
+                    </AccordionDetails>
+                  ) : (
+                    <AccordionDetails>
+                      <List>
+                        {item.topics.map((topic) => (
+                          <Link
+                            key={topic.key}
+                            href={{
+                              pathname: "/classes/details",
+                              query: {
+                                id: topic.key,
+                              },
+                            }}
+                            style={{
+                              textDecoration: "none",
+                              color: "inherit",
+                            }}
+                          >
+                            <ListItem disablePadding>
+                              <ListItemButton>
+                                <ListItemIcon>
+                                  <Topic />
+                                </ListItemIcon>
+                                <ListItemText primary={topic.name} />
+                              </ListItemButton>
+                            </ListItem>
+                          </Link>
+                        ))}
+                      </List>
+                    </AccordionDetails>
+                  )}
+                </Accordion>
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 };

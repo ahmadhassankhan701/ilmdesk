@@ -31,31 +31,21 @@ const PublicQuizResult = ({
   }, [quizTitle]);
 
   const quizLength = quiz.questions?.length || 0;
-  function normalizeText(text) {
-    if (typeof text === "number") {
-      text = text.toString(); // Convert numbers to strings
-    }
 
-    if (typeof text !== "string") {
-      console.error("Invalid text to normalizeText:", text); // Log invalid text for debugging
-      return ""; // Return an empty string or handle the error appropriately
-    }
-
-    let normalizedText = text.replace(/\s+/g, " ").trim(); // Normalize spaces
-    return normalizedText;
-  }
   return (
     <Box>
       <Box>
-        {quiz &&
-        quiz.questions.length &&
-        summary.summary &&
-        summary.summary.length ? (
+        {quiz && quizLength && summary.summary && summary.summary.length ? (
           <Grid container spacing={2}>
             <Grid item xs={12} md={5}>
               <Box>
                 <QuizFinalResult
-                  result={summary.result}
+                  result={{
+                    percentage: summary.percentage,
+                    correct: summary.correct,
+                    incorrect: summary.incorrect,
+                    attempted: summary.attempted,
+                  }}
                   studentName={summary.studentName}
                   length={quizLength}
                   duration={quiz.duration}
@@ -111,7 +101,7 @@ const PublicQuizResult = ({
                     color={"#fff"}
                     sx={{ fontSize: { xs: 12, sm: 16 } }}
                   >
-                    {summary.result.attempted} / {quizLength}
+                    {summary.attempted} / {quizLength}
                   </Typography>
                 </Box>
                 <Box
@@ -130,126 +120,36 @@ const PublicQuizResult = ({
                   </Typography>
                 </Box>
                 <Box>
-                  <Box
-                    sx={[
-                      {
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        boxShadow: "0 0 10px 0 rgba(0,0,0,0.1)",
-                        margin: 2,
-                        padding: 1,
-                        borderRadius: 2,
-                        my: 2,
-                        cursor: "pointer",
-                      },
-                      normalizeText(quiz.questions[current].option1) ===
-                      normalizeText(quiz.questions[current].correctOption)
-                        ? summary.summary[current].selectedOption === ""
-                          ? { border: "2px solid gray" }
-                          : { border: "2px solid green" }
-                        : normalizeText(
-                            summary.summary[current].selectedOption
-                          ) === normalizeText(quiz.questions[current].option1)
-                        ? { border: "2px solid red" }
-                        : { border: "none" },
-                    ]}
-                  >
-                    <Avatar>A</Avatar>
-                    <Typography variant="body1" component="div">
-                      {quiz.questions[current].option1}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={[
-                      {
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        boxShadow: "0 0 10px 0 rgba(0,0,0,0.1)",
-                        margin: 2,
-                        padding: 1,
-                        borderRadius: 2,
-                        my: 2,
-                        cursor: "pointer",
-                      },
-                      normalizeText(quiz.questions[current].option2) ===
-                      normalizeText(quiz.questions[current].correctOption)
-                        ? summary.summary[current].selectedOption === ""
-                          ? { border: "2px solid gray" }
-                          : { border: "2px solid green" }
-                        : normalizeText(
-                            summary.summary[current].selectedOption
-                          ) === normalizeText(quiz.questions[current].option2)
-                        ? { border: "2px solid red" }
-                        : { border: "none" },
-                    ]}
-                  >
-                    <Avatar>B</Avatar>
-                    <Typography variant="body1" component="div">
-                      {quiz.questions[current].option2}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={[
-                      {
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        boxShadow: "0 0 10px 0 rgba(0,0,0,0.1)",
-                        margin: 2,
-                        padding: 1,
-                        borderRadius: 2,
-                        my: 2,
-                        cursor: "pointer",
-                      },
-                      normalizeText(quiz.questions[current].option3) ===
-                      normalizeText(quiz.questions[current].correctOption)
-                        ? summary.summary[current].selectedOption === ""
-                          ? { border: "2px solid gray" }
-                          : { border: "2px solid green" }
-                        : normalizeText(
-                            summary.summary[current].selectedOption
-                          ) === normalizeText(quiz.questions[current].option3)
-                        ? { border: "2px solid red" }
-                        : { border: "none" },
-                    ]}
-                  >
-                    <Avatar>C</Avatar>
-                    <Typography variant="body1" component="div">
-                      {quiz.questions[current].option3}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={[
-                      {
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        boxShadow: "0 0 10px 0 rgba(0,0,0,0.1)",
-                        margin: 2,
-                        padding: 1,
-                        borderRadius: 2,
-                        my: 2,
-                        cursor: "pointer",
-                      },
-                      normalizeText(quiz.questions[current].option4) ===
-                      normalizeText(quiz.questions[current].correctOption)
-                        ? summary.summary[current].selectedOption === ""
-                          ? { border: "2px solid gray" }
-                          : { border: "2px solid green" }
-                        : normalizeText(
-                            summary.summary[current].selectedOption
-                          ) === normalizeText(quiz.questions[current].option4)
-                        ? { border: "2px solid red" }
-                        : { border: "none" },
-                    ]}
-                  >
-                    <Avatar>D</Avatar>
-                    <Typography variant="body1" component="div">
-                      {quiz.questions[current].option4}
-                    </Typography>
-                  </Box>
+                  {quiz.questions[current].options.map((option, idx) => (
+                    <Box
+                      key={idx}
+                      sx={[
+                        {
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          boxShadow: "0 0 10px 0 rgba(0,0,0,0.1)",
+                          margin: 2,
+                          padding: 1,
+                          borderRadius: 2,
+                          my: 2,
+                          cursor: "pointer",
+                        },
+                        idx === quiz.questions[current].correctOption
+                          ? summary.summary[current].selectedOption === null
+                            ? { border: "2px solid gray" }
+                            : { border: "2px solid green" }
+                          : summary.summary[current].selectedOption === idx
+                          ? { border: "2px solid red" }
+                          : { border: "none" },
+                      ]}
+                    >
+                      <Avatar>{idx + 1}</Avatar>
+                      <Typography variant="body1" component="div">
+                        {option}
+                      </Typography>
+                    </Box>
+                  ))}
                 </Box>
                 <Box ml={2}>
                   <Typography

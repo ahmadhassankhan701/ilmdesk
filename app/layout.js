@@ -8,6 +8,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../styles/globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { usePathname } from "next/navigation";
 const poppins = Poppins({ weight: ["400", "700"], subsets: ["latin"] });
 
 const theme = createTheme({
@@ -16,6 +17,8 @@ const theme = createTheme({
   },
 });
 export default function RootLayout({ children }) {
+  const pathname = usePathname();
+  const isDashboard = pathname.startsWith("/dashboard");
   return (
     <html lang="en">
       <body
@@ -44,9 +47,9 @@ export default function RootLayout({ children }) {
                 height: "100%",
               }}
             >
-              <Nav />
+              {!isDashboard && <Nav />}
               {children}
-              <Footer />
+              {!isDashboard && <Footer />}
             </Box>
           </ThemeProvider>
         </AuthProvider>
