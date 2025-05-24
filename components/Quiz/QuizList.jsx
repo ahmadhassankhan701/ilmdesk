@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
-const QuizList = ({ quizzes }) => {
+const QuizList = ({ quizzes, type }) => {
   const [experts, setExperts] = useState([]);
   const [intermediates, setIntermediates] = useState([]);
   const [beginners, setBeginners] = useState([]);
@@ -48,10 +48,10 @@ const QuizList = ({ quizzes }) => {
             href={
               item.mode === "offline"
                 ? {
-                    pathname: `/classes/offquiz/${item.key}`,
+                    pathname: `/${type}/offquiz/${item.key}`,
                   }
                 : {
-                    pathname: `/classes/quiz/${item.key}`,
+                    pathname: `/${type}/quiz/${item.key}`,
                   }
             }
             style={{ textDecoration: "none", color: "inherit" }}

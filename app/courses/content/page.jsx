@@ -41,27 +41,50 @@ import renderHTML from "react-render-html";
 import moment from "moment";
 import PDFModal from "@/components/Modals/PDFModal";
 import QuizList from "@/components/Quiz/QuizList";
-const DetailsPage = () => {
+import PDFCourseModal from "@/components/Modals/PDFCourseModal";
+import { useAuth } from "@/context/AuthContext";
+const ContentPage = () => {
   const route = useRouter();
+  const { state } = useAuth();
   const searchParam = useSearchParams();
-  const topicId = searchParam.get("id");
+  const courseId = searchParam.get("id");
   const [content, setContent] = useState(null);
   const [quizzes, setQuizzes] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [pdfModal, setPdfModal] = useState(false);
   const [pdfURL, setPdfURL] = useState("");
+  const userId = state && state.user ? state.user.uid : 0;
   useEffect(() => {
-    if (!topicId) {
+    if (!courseId) {
       route.back();
       return;
     } else {
+      checkIfEnrolled();
       fetchContent();
       fetchQuizList();
     }
-  }, [topicId]);
+  }, [courseId]);
+  const checkIfEnrolled = async () => {
+    try {
+      setLoading(true);
+      const docRef = doc(db, "CourseTheory", courseId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const students = docSnap.data().students;
+        if (students.includes(userId) === false) route.push("/courses");
+      } else {
+        route.back();
+      }
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.log(error);
+      toast.error("Failed to fetch enrolled user");
+    }
+  };
   const fetchContent = async () => {
     try {
-      const docRef = doc(db, "ClassesTheory", topicId);
+      const docRef = doc(db, "CourseTheory", courseId);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         setContent({ key: docSnap.id, ...docSnap.data() });
@@ -75,8 +98,8 @@ const DetailsPage = () => {
   const fetchQuizList = async () => {
     try {
       setLoading(true);
-      const quizzesRef = collection(db, "ClassQuizzes");
-      const q = query(quizzesRef, where("topicId", "==", topicId));
+      const quizzesRef = collection(db, "CourseQuizzes");
+      const q = query(quizzesRef, where("courseId", "==", courseId));
       const querySnapshot = await getDocs(q);
       if (querySnapshot.size == 0) {
         setLoading(false);
@@ -96,7 +119,7 @@ const DetailsPage = () => {
 
   return (
     <Box display={"flex"} justifyContent={"center"}>
-      <PDFModal open={pdfModal} setOpen={setPdfModal} url={pdfURL} />
+      <PDFCourseModal open={pdfModal} setOpen={setPdfModal} url={pdfURL} />
       <Box sx={{ mx: { xs: 1, lg: 10 } }} mt={10} width={"80%"}>
         <Backdrop
           sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
@@ -330,7 +353,7 @@ const DetailsPage = () => {
                   Free Quizzes
                 </Typography>
                 {quizzes ? (
-                  <QuizList type={"classes"} quizzes={quizzes} />
+                  <QuizList type={"courses"} quizzes={quizzes} />
                 ) : (
                   <Typography>No quizzes available</Typography>
                 )}
@@ -373,7 +396,7 @@ const PageWrapper = () => (
       </Backdrop>
     }
   >
-    <DetailsPage />
+    <ContentPage />
   </Suspense>
 );
 export default PageWrapper;

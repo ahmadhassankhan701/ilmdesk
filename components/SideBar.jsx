@@ -1,154 +1,3 @@
-// import { useAuth } from "@/context/AuthContext";
-// import { auth } from "@/firebase";
-// import {
-//   AccountBalanceOutlined,
-//   Dashboard,
-//   LogoutOutlined,
-//   MenuBookOutlined,
-//   Person2Outlined,
-// } from "@mui/icons-material";
-// import { Avatar, Box, Divider, Grid, Typography } from "@mui/material";
-// import { signOut } from "firebase/auth";
-// import Cookies from "js-cookie";
-// import { useRouter } from "next/navigation";
-// import React from "react";
-// import { toast } from "react-toastify";
-
-// const SideBar = ({ children, active }) => {
-//   const route = useRouter();
-//   const { state, setState } = useAuth();
-//   const handleLogout = async () => {
-//     try {
-//       await signOut(auth);
-//       Cookies.remove("qasim_lms_auth");
-//       setState({
-//         user: null,
-//       });
-//       route.push("/");
-//     } catch (error) {
-//       toast.error("Logout failed");
-//       console.log(error);
-//     }
-//   };
-//   return (
-//     <Grid container spacing={2}>
-//       <Grid item xs={12} sm={3}>
-//         <Box
-//           sx={{
-//             bgcolor: "rgb(0, 41, 53)",
-//             borderRadius: 3,
-//             p: 2,
-//             mt: 5,
-//             boxShadow:
-//               "rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px",
-//           }}
-//         >
-//           <Box
-//             sx={{
-//               display: "flex",
-//               justifyContent: "center",
-//               flexDirection: "column",
-//               alignItems: "center",
-//             }}
-//           >
-//             {state && state.user && state.user.image ? (
-//               <Avatar src={state.user.image} sx={{ width: 100, height: 100 }} />
-//             ) : (
-//               <Avatar sx={{ width: 100, height: 100 }}>
-//                 {state && state.user && state.user.name.charAt(0)}
-//               </Avatar>
-//             )}
-//             <Typography
-//               sx={{
-//                 fontSize: 16,
-//                 fontWeight: 800,
-//                 color: "#fff",
-//                 mt: 2,
-//               }}
-//             >
-//               {state && state.user && state.user.name}
-//             </Typography>
-//           </Box>
-//           <Divider sx={{ my: 3, bgcolor: "#fff" }} />
-//           <Box>
-//             {[
-//               { name: "Dashboard", icon: <Dashboard sx={{ color: "#fff" }} /> },
-//               {
-//                 name: "My Courses",
-//                 icon: <MenuBookOutlined sx={{ color: "#fff" }} />,
-//               },
-//               {
-//                 name: "Account Details",
-//                 icon: <AccountBalanceOutlined sx={{ color: "#fff" }} />,
-//               },
-//               {
-//                 name: "Profile",
-//                 icon: <Person2Outlined sx={{ color: "#fff" }} />,
-//               },
-//             ].map((item, i) => (
-//               <Box
-//                 sx={{
-//                   display: "flex",
-//                   alignItems: "center",
-//                   p: 1,
-//                   mb: 1,
-//                   cursor: "pointer",
-//                   gap: 3,
-//                   borderRadius: 2,
-//                   "&:hover": {
-//                     bgcolor: "#ff3158",
-//                   },
-//                 }}
-//                 bgcolor={active === item.name ? "#ff3158" : "transparent"}
-//                 key={i}
-//               >
-//                 {item.icon}
-//                 <Typography
-//                   sx={{
-//                     fontSize: 14,
-//                     fontWeight: 400,
-//                   }}
-//                   color={"#fff"}
-//                 >
-//                   {item.name}
-//                 </Typography>
-//               </Box>
-//             ))}
-//             <Divider sx={{ my: 2, bgcolor: "#fff" }} />
-//             <Box
-//               sx={{
-//                 display: "flex",
-//                 alignItems: "center",
-//                 p: 1,
-//                 mb: 1,
-//                 cursor: "pointer",
-//                 gap: 3,
-//               }}
-//               onClick={handleLogout}
-//             >
-//               <LogoutOutlined sx={{ color: "#fff" }} />
-//               <Typography
-//                 sx={{
-//                   fontSize: 14,
-//                   fontWeight: 400,
-//                   color: "#fff",
-//                 }}
-//               >
-//                 Logout
-//               </Typography>
-//             </Box>
-//           </Box>
-//         </Box>
-//       </Grid>
-//       <Grid item xs={12} sm={9} mt={5}>
-//         {children}
-//       </Grid>
-//     </Grid>
-//   );
-// };
-
-// export default SideBar;
-
 import * as React from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -156,35 +5,23 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
 import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import { useRouter } from "next/router";
 import {
-  ArrowBack,
-  ArrowBackIos,
+  AccountBalance,
   ClassOutlined,
   DashboardOutlined,
-  LibraryBooksOutlined,
   Logout,
-  ManageAccountsOutlined,
-  MenuBookOutlined,
   Notifications,
-  PeopleOutline,
   Person,
   Quiz,
-  QuizOutlined,
   Undo,
 } from "@mui/icons-material";
 import Link from "next/link";
-import Cookies from "js-cookie";
-import { Avatar, Button, InputBase, styled } from "@mui/material";
+import { Avatar, InputBase, styled } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 const drawerWidth = 240;
 const Search = styled("div")(({ theme }) => ({
   backgroundColor: "lightgray",
@@ -228,33 +65,39 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 export default function SideBar(props) {
   const { window } = props;
+  const route = useRouter();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   let sideArray = [
     {
       name: "Dashboard",
       icon: <DashboardOutlined sx={{ color: "#fff", fontSize: 20 }} />,
+      route: "/dashboard",
     },
     {
       name: "Courses",
       icon: <ClassOutlined sx={{ color: "#fff", fontSize: 20 }} />,
+      route: "/dashboard/courses",
     },
     {
       name: "Quizzes",
       icon: <Quiz sx={{ color: "#fff", fontSize: 20 }} />,
+      route: "/dashboard/quizzes",
+    },
+    {
+      name: "Account",
+      icon: <AccountBalance sx={{ color: "#fff", fontSize: 20 }} />,
+      route: "/dashboard/account",
     },
     {
       name: "Profile",
       icon: <Person sx={{ color: "#fff", fontSize: 20 }} />,
+      route: "/dashboard/profile",
     },
   ];
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
-  const handleNavigation = (item) => {
-    const lowerCased = item.toLowerCase();
-    if (lowerCased === "home") route.push("/");
-    else route.push("/" + lowerCased);
-  };
+
   const drawer = (
     <div
       style={{
@@ -344,14 +187,14 @@ export default function SideBar(props) {
               sideArray.map((item, index) => (
                 <Box
                   key={item.name}
-                  onClick={() => handleNavigation(item.name)}
+                  onClick={() => route.push(item.route)}
                   sx={[
                     item.name === "Dashboard" && usePathname() === "/"
                       ? {
                           color: "#fff",
                           bgcolor: "#f50366",
                         }
-                      : usePathname().includes(item.name.toLowerCase())
+                      : usePathname() === item.route
                       ? {
                           color: "#fff",
                           bgcolor: "#f50366",
@@ -369,6 +212,7 @@ export default function SideBar(props) {
                       alignItems: "center",
                       gap: 2,
                       borderRadius: 2,
+                      cursor: "pointer",
                       width: "100%",
                       "&:hover": {
                         color: "#f50366",

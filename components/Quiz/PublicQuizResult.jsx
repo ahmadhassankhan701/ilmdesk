@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import QuizFinalResult from "@/components/Quiz/QuizFinalResult";
 import renderHTML from "react-render-html";
+import PDFQuizDownload from "../Modals/PDFQuizDownload";
 
 const PublicQuizResult = ({
   quizDuration = "",
@@ -19,6 +20,7 @@ const PublicQuizResult = ({
     quizTitle: "",
   });
   const [summary, setSummary] = useState([]);
+  const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState(0);
   useEffect(() => {
     setQuiz({
@@ -116,7 +118,7 @@ const PublicQuizResult = ({
                     {current + 1}
                   </Typography>
                   <Typography variant="body1" component="div">
-                    {quiz.questions[current].title}
+                    {quiz.questions[current].question}
                   </Typography>
                 </Box>
                 <Box>
@@ -179,7 +181,7 @@ const PublicQuizResult = ({
                     size="small"
                     variant="contained"
                     sx={{ textTransform: "none" }}
-                    color={"error"}
+                    color={"primary"}
                     onClick={() => setCurrent(current - 1)}
                   >
                     Previous
@@ -187,7 +189,7 @@ const PublicQuizResult = ({
                   <Button
                     size="small"
                     variant="contained"
-                    color={"warning"}
+                    color={"secondary"}
                     sx={{ textTransform: "none" }}
                     disabled={current === quizLength - 1}
                     onClick={() => setCurrent(current + 1)}
@@ -198,11 +200,28 @@ const PublicQuizResult = ({
                     size="small"
                     variant="contained"
                     sx={{ textTransform: "none" }}
-                    color={"secondary"}
+                    color={"success"}
                     onClick={() => route.back()}
                   >
-                    Take More
+                    Done
                   </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    sx={{ textTransform: "none" }}
+                    color={"error"}
+                    onClick={() => setOpen(true)}
+                  >
+                    Download
+                  </Button>
+                  <PDFQuizDownload
+                    duration={quiz.duration}
+                    questions={quiz.questions}
+                    title={quiz.quizTitle}
+                    summary={summary}
+                    open={open}
+                    setOpen={setOpen}
+                  />
                 </Box>
               </Box>
             </Grid>
