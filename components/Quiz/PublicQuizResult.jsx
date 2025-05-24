@@ -201,7 +201,7 @@ const PublicQuizResult = ({
                     variant="contained"
                     sx={{ textTransform: "none" }}
                     color={"success"}
-                    onClick={() => route.back()}
+                    onClick={() => route.push("/dashboard/courses")}
                   >
                     Done
                   </Button>

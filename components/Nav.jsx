@@ -193,6 +193,7 @@ function Nav(props) {
                       height: "auto",
                       marginLeft: "50px",
                     }}
+                    onClick={() => route.push("/")}
                   />
                 </Box>
                 <IconButton
@@ -220,7 +221,9 @@ function Nav(props) {
                     style={{
                       maxWidth: 200,
                       height: "auto",
+                      cursor: "pointer",
                     }}
+                    onClick={() => route.push("/")}
                   />
                 </Box>
                 <Box

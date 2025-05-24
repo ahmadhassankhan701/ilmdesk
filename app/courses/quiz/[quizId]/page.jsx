@@ -1,8 +1,16 @@
 "use client";
 import { db } from "@/firebase";
 import { AccessAlarmOutlined } from "@mui/icons-material";
-import { Avatar, Box, Button, TextField, Typography } from "@mui/material";
-import { doc, getDoc } from "firebase/firestore";
+import { Avatar, Box, Button, Typography } from "@mui/material";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -22,7 +30,6 @@ const page = ({ params }) => {
   const loaderImage = "/loader.gif";
   const [quiz, setQuiz] = useState([]);
   const [quizSummary, setQuizSummary] = useState([]);
-  const [studentName, setStudentName] = useState("");
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [quizStart, setQuizStart] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,26 +39,27 @@ const page = ({ params }) => {
     score: 0,
     percentage: 0,
   });
-  const userName = state && state.user ? state.user.name : "John Doe";
+  const studentName = state && state.user ? state.user.name : "John Doe";
+  const studentId = state && state.user ? state.user.uid : 0;
   useEffect(() => {
-    const fetchQuiz = async () => {
-      if (!quizId) {
-        route.back();
-        return;
-      }
-      const docRef = doc(db, `CourseQuizzes/${quizId}`);
-      const docSnap = await getDoc(docRef);
-      let items = [];
-      if (docSnap.exists()) {
-        items = {
-          key: docSnap.id,
-          ...docSnap.data(),
-        };
-      }
-      setQuiz(items);
-    };
-    fetchQuiz();
+    checkIfAttempted();
   }, [state && state.user]);
+  const fetchQuiz = async () => {
+    if (!quizId) {
+      route.back();
+      return;
+    }
+    const docRef = doc(db, `CourseQuizzes/${quizId}`);
+    const docSnap = await getDoc(docRef);
+    let items = [];
+    if (docSnap.exists()) {
+      items = {
+        key: docSnap.id,
+        ...docSnap.data(),
+      };
+    }
+    setQuiz(items);
+  };
   useEffect(() => {
     let timer;
     if (timeLeft === 0) {
@@ -60,10 +68,11 @@ const page = ({ params }) => {
       clearInterval(timer);
       return;
     }
-
-    timer = setInterval(() => {
-      setTimeLeft((prevTimeLeft) => prevTimeLeft - 1);
-    }, 1000);
+    if (timeLeft !== null) {
+      timer = setInterval(() => {
+        setTimeLeft((prevTimeLeft) => prevTimeLeft - 1);
+      }, 1000);
+    }
 
     // Clear interval when component unmounts or time runs out
     return () => clearInterval(timer);
@@ -74,7 +83,40 @@ const page = ({ params }) => {
     setQuizStart(true);
     setTimeLeft(parseInt(quiz.duration * 60));
   };
-
+  const checkIfAttempted = async () => {
+    try {
+      setLoading(true);
+      const docRef = collection(db, `CourseQuizAttempts`);
+      const q = query(
+        docRef,
+        where("studentId", "==", studentId),
+        where("quizId", "==", quizId)
+      );
+      const snapshot = await getDocs(q);
+      if (snapshot.size !== 0) {
+        const data = snapshot.docs[0].data();
+        setQuizSummary({
+          studentName: data.studentName,
+          attempted: data.attempted,
+          correct: data.correct,
+          incorrect: data.incorrect,
+          percentage: data.percentage,
+          summary: data.summary,
+        });
+        setResult({
+          ...result,
+          percentage: data.percentage,
+          score: data.correct,
+        });
+      }
+      fetchQuiz();
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      toast.error("Something went wrong");
+      console.log(error);
+    }
+  };
   const handleOptionSelect = (index) => {
     setSelectedAnswers({
       ...selectedAnswers,
@@ -116,6 +158,18 @@ const page = ({ params }) => {
       });
 
       const percentage = (calculatedScore / quizLength) * 100;
+      const attemptedDetails = {
+        studentName,
+        studentId,
+        quizId,
+        attempted: Object.keys(selectedAnswers).length,
+        correct: calculatedScore,
+        incorrect: quizLength - calculatedScore,
+        percentage: percentage.toFixed(2),
+        summary: summaryItems,
+      };
+      const attemptRef = collection(db, `CourseQuizAttempts`);
+      await addDoc(attemptRef, attemptedDetails);
       setQuizSummary({
         studentName,
         attempted: Object.keys(selectedAnswers).length,
@@ -129,7 +183,6 @@ const page = ({ params }) => {
         percentage: percentage.toFixed(2),
         score: calculatedScore,
       });
-      setTimeLeft(0);
       setQuizStart(false);
       setLoading(false);
     } catch (error) {
@@ -274,7 +327,7 @@ const page = ({ params }) => {
                       size="small"
                       variant="contained"
                       color={"success"}
-                      onClick={handleSubmit}
+                      onClick={() => setTimeLeft(0)}
                     >
                       Submit
                     </Button>
@@ -324,7 +377,7 @@ const page = ({ params }) => {
                   </Typography>
                   <Box>
                     <Typography fontSize={18} fontWeight={"bold"}>
-                      Name: {userName}
+                      Name: {studentName}
                     </Typography>
                     <Typography color="text.secondary">
                       Total Questions: {quizLength}
