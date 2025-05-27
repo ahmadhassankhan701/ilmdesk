@@ -1,30 +1,14 @@
 "use client";
-import {
-  ArrowForwardIos,
-  CheckCircleOutlineOutlined,
-  Delete,
-  NavigateNext,
-  Quiz,
-  Star,
-  StarOutline,
-} from "@mui/icons-material";
+import { Star, StarOutline } from "@mui/icons-material";
 import {
   Avatar,
   Backdrop,
   Box,
-  Breadcrumbs,
   Button,
   CardMedia,
   Grid,
-  IconButton,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemIcon,
-  ListItemText,
   Typography,
 } from "@mui/material";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { toast } from "react-toastify";
@@ -39,13 +23,12 @@ import {
 import { db } from "@/firebase";
 import renderHTML from "react-render-html";
 import moment from "moment";
-import PDFModal from "@/components/Modals/PDFModal";
 import QuizList from "@/components/Quiz/QuizList";
 import PDFCourseModal from "@/components/Modals/PDFCourseModal";
 import { useAuth } from "@/context/AuthContext";
 const ContentPage = () => {
-  const route = useRouter();
   const { state } = useAuth();
+  const route = useRouter();
   const searchParam = useSearchParams();
   const courseId = searchParam.get("id");
   const [content, setContent] = useState(null);
@@ -57,7 +40,6 @@ const ContentPage = () => {
   useEffect(() => {
     if (!courseId) {
       route.back();
-      return;
     } else {
       checkIfEnrolled();
       fetchContent();
