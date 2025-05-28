@@ -1,30 +1,14 @@
 "use client";
-import {
-  ArrowForwardIos,
-  CheckCircleOutlineOutlined,
-  Delete,
-  NavigateNext,
-  Quiz,
-  Star,
-  StarOutline,
-} from "@mui/icons-material";
+import { Star, StarOutline } from "@mui/icons-material";
 import {
   Avatar,
   Backdrop,
   Box,
-  Breadcrumbs,
   Button,
   CardMedia,
   Grid,
-  IconButton,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemIcon,
-  ListItemText,
   Typography,
 } from "@mui/material";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { toast } from "react-toastify";
