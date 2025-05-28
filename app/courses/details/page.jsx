@@ -1,7 +1,6 @@
 "use client";
 import {
   CheckCircleOutlineOutlined,
-  NavigateNext,
   Star,
   StarOutline,
 } from "@mui/icons-material";
@@ -9,7 +8,6 @@ import {
   Avatar,
   Backdrop,
   Box,
-  Breadcrumbs,
   Button,
   Grid,
   List,
@@ -22,21 +20,14 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { toast } from "react-toastify";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase";
 import renderHTML from "react-render-html";
 import moment from "moment";
 import { useAuth } from "@/context/AuthContext";
 const DetailsPage = () => {
-  const route = useRouter();
   const { state } = useAuth();
+  const route = useRouter();
   const searchParam = useSearchParams();
   const courseId = searchParam.get("id");
   const [content, setContent] = useState([]);
