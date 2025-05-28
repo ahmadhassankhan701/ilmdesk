@@ -17,7 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { toast } from "react-toastify";
 import { doc, getDoc } from "firebase/firestore";
@@ -27,7 +27,6 @@ import moment from "moment";
 import { useAuth } from "@/context/AuthContext";
 const DetailsPage = () => {
   const { state } = useAuth();
-  const route = useRouter();
   const searchParam = useSearchParams();
   const courseId = searchParam.get("id");
   const [content, setContent] = useState([]);
@@ -35,10 +34,6 @@ const DetailsPage = () => {
   const isUserLoggedIn = state && state.user ? true : false;
   useEffect(() => {
     const fetchContent = async () => {
-      if (!courseId) {
-        route.back();
-        return;
-      }
       try {
         // Fetch content from the database
         setLoading(true);

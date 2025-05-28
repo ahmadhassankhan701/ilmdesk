@@ -3,7 +3,6 @@ import {
   Text,
   View,
   Document,
-  PDFDownloadLink,
   Image,
   Svg,
   Circle,
@@ -11,7 +10,7 @@ import {
 } from "@react-pdf/renderer";
 import { styles } from "./PDFStyles";
 import renderHTML from "react-render-html";
-import { Box, Button, IconButton, Modal } from "@mui/material";
+import { Box, IconButton, Modal } from "@mui/material";
 import { Close } from "@mui/icons-material";
 const style = {
   width: "100%",

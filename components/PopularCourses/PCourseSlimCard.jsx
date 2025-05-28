@@ -136,9 +136,7 @@ const PCourseWideCard = ({ data }) => {
               </Box>
               <Box display={"flex"} gap={1} alignItems={"center"}>
                 <Typography color={"#36454F"} fontSize={20} fontWeight={"500"}>
-                  {data.price === "" || data.price === 0
-                    ? "Free"
-                    : `Rs. ${data.price}`}
+                  {data.price ? `Rs. ${data.price}` : "Free"}
                 </Typography>
                 <Typography
                   color={"#ff3158"}
@@ -146,9 +144,7 @@ const PCourseWideCard = ({ data }) => {
                   fontWeight={"500"}
                   sx={{ textDecoration: "line-through", fontStyle: "italic" }}
                 >
-                  {data.price === "" || data.price === 0
-                    ? "Free"
-                    : parseInt(data.price) + 100}
+                  {data.price ? parseInt(data.price) + 100 : "Free"}
                 </Typography>
               </Box>
             </Box>

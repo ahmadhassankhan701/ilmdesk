@@ -39,41 +39,44 @@ const VisuallyHiddenInput = styled("input")({
   width: 1,
 });
 function CheckoutPage() {
+  const { state } = useAuth();
   const route = useRouter();
   const searchParams = useSearchParams();
   const courseId = searchParams.get("id");
-  const { state } = useAuth();
   const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(false);
-  const userId = state && state.user ? state.user.uid : 0;
-  const userName = state && state.user ? state.user.name : "John Doe";
-  if (!state && !state.user) {
-    route.push("/auth?redirect=/courses/checkout");
-  }
+  const userId = state?.user?.uid;
+  const userName = state?.user?.name;
+  // Redirect if not logged in
   useEffect(() => {
-    const fetchContent = async () => {
-      if (!courseId) {
-        route.back();
-        return;
+    if (!state?.user) {
+      route.push("/auth?redirect=/courses/checkout");
+    }
+  }, [state]);
+  // Fetch content and enrollment only when userId & courseId are available
+  useEffect(() => {
+    if (userId && courseId) {
+      checkIfEnrolled();
+      fetchContent();
+    }
+  }, [userId, courseId]);
+
+  const fetchContent = async () => {
+    try {
+      setLoading(true);
+      const docRef = doc(db, "CourseTheory", courseId);
+      const snapshot = await getDoc(docRef);
+      if (snapshot.exists()) {
+        setContent({ key: snapshot.id, ...snapshot.data(), ratings: [] });
       }
-      try {
-        // Fetch content from the database
-        setLoading(true);
-        const docRef = doc(db, "CourseTheory", courseId);
-        const snapshot = await getDoc(docRef);
-        if (snapshot.exists()) {
-          setContent({ key: snapshot.id, ...snapshot.data(), ratings: [] });
-        }
-        setLoading(false);
-      } catch (error) {
-        setLoading(false);
-        console.log(error);
-        toast.error("Failed to fetch content");
-      }
-    };
-    checkIfEnrolled();
-    fetchContent();
-  }, [courseId]);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.log(error);
+      toast.error("Failed to fetch content");
+    }
+  };
+
   const checkIfEnrolled = async () => {
     try {
       const docRef = collection(db, "Payments");
@@ -83,19 +86,19 @@ function CheckoutPage() {
         where("userId", "==", userId)
       );
       const querySnapshot = await getDocs(q);
-      if (querySnapshot.size == 0) {
+
+      if (querySnapshot.empty) {
         return;
       }
-      if (querySnapshot[0].data()) {
-        const status = querySnapshot[0].data().status;
-        if (status === "approved") {
-          toast.success("Already enrolled in this course");
-          route.push("/dashboard");
-        }
-        if (status === "pending") {
-          toast.success("Paid already. Wait for approval");
-          route.push("/dashboard");
-        }
+
+      const status = querySnapshot.docs[0].data().status;
+
+      if (status === "approved") {
+        toast.success("Already enrolled in this course");
+        route.push("/dashboard/courses");
+      } else if (status === "pending") {
+        toast.success("Paid already. Wait for approval");
+        route.push("/dashboard/courses");
       }
     } catch (error) {
       console.log(error);
@@ -135,8 +138,8 @@ function CheckoutPage() {
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       const paymentData = {
-        userId,
-        userName,
+        userId: userId,
+        userName: userName,
         courseId,
         courseName: content ? content.title : "",
         amount: content ? content.price : 0,
