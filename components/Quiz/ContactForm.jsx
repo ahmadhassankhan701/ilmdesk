@@ -33,7 +33,6 @@ const ContactForm = () => {
           fullWidth
           sx={{ mb: 3 }}
           multiline
-          maxRows={3}
           rows={3}
         />
         <Button

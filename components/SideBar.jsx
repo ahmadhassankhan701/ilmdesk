@@ -22,6 +22,8 @@ import Link from "next/link";
 import { Avatar, InputBase, styled } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { usePathname, useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { useAuth } from "@/context/AuthContext";
 const drawerWidth = 240;
 const Search = styled("div")(({ theme }) => ({
   backgroundColor: "lightgray",
@@ -65,6 +67,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 export default function SideBar(props) {
   const { window } = props;
+  const { setState, state } = useAuth();
   const route = useRouter();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   let sideArray = [
@@ -111,7 +114,6 @@ export default function SideBar(props) {
         display={"flex"}
         justifyContent={"center"}
         alignItems={"center"}
-        // bgcolor={"primary.dark"}
         width={"100%"}
         overflow={"hidden"}
         height={120}
@@ -206,7 +208,7 @@ export default function SideBar(props) {
                       my: 1,
                       p: 2,
                       textTransform: "none",
-                      fontSize: { xs: 8, sm: 10, md: 14 },
+                      fontSize: { xs: 12, md: 14 },
                       display: "flex",
                       justifyContent: "felx-start",
                       alignItems: "center",
@@ -246,7 +248,11 @@ export default function SideBar(props) {
           gap={4.8}
           sx={{ cursor: "pointer" }}
           onClick={() => {
-            // Cookies.remove("lms_admin_auth");
+            Cookies.remove("qasim_lms_auth");
+            setState({
+              ...state,
+              user: null,
+            });
             route.push("/");
           }}
         >
@@ -348,8 +354,7 @@ export default function SideBar(props) {
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
               width: drawerWidth,
-              backgroundColor: "red",
-              // backgroundColor: "#3c4b64",
+              backgroundColor: "#002935",
               color: "#ffffff",
             },
           }}

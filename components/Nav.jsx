@@ -6,10 +6,6 @@ import CssBaseline from "@mui/material/CssBaseline";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
 import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
@@ -62,47 +58,44 @@ function Nav(props) {
         <img src={"/ilmlogo.png"} style={{ maxWidth: 200, height: "auto" }} />
       </Box>
       <Divider sx={{ bgcolor: "white" }} />
-      <List>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          flexWrap: { xs: "nowrap", sm: "wrap" },
+        }}
+      >
         {navItems.map((item) => (
-          <ListItem
+          <Button
             key={item}
-            disablePadding
-            sx={
+            sx={[
               item === "Home" && usePathname() === "/"
                 ? {
-                    bgcolor: "#ff3158",
+                    color: "#ff3158",
                   }
                 : usePathname().includes(item.toLowerCase())
                 ? {
-                    bgcolor: "#ff3158",
+                    color: "#ff3158",
                   }
                 : {
-                    bgcolor: "transparent",
-                  }
-            }
+                    color: "#fff",
+                  },
+              {
+                my: 1,
+                textTransform: "none",
+                fontSize: { xs: 12, md: 14 },
+                "&:hover": {
+                  color: "#f50366",
+                },
+              },
+            ]}
+            onClick={() => handleNavigation(item)}
           >
-            <ListItemButton
-              sx={[
-                item === "Home" && usePathname() === "/"
-                  ? {
-                      borderRight: "5px solid #f50366",
-                    }
-                  : usePathname().includes(item.toLowerCase())
-                  ? {
-                      borderRight: "5px solid #f50366",
-                    }
-                  : {
-                      borderRight: "none",
-                    },
-                { textAlign: "center" },
-              ]}
-            >
-              <ListItemText sx={{ color: "white" }} primary={item} />
-            </ListItemButton>
-          </ListItem>
+            {item}
+          </Button>
         ))}
-      </List>
-      {!isLoggedIn && (
+      </Box>
+      {!isLoggedIn ? (
         <Box
           sx={{
             display: "flex",
@@ -142,6 +135,18 @@ function Nav(props) {
             Register
           </Button>
         </Box>
+      ) : (
+        <Button
+          sx={{
+            mt: 3,
+            textTransform: "none",
+          }}
+          color="error"
+          variant="contained"
+          onClick={() => handleNavigation("Dashboard")}
+        >
+          Dashboard
+        </Button>
       )}
     </Box>
   );
