@@ -37,9 +37,10 @@ const PopularCourses = () => {
           textAlign: "center",
         }}
       >
-        Architect client-centered total linkage for intuitive benefits.
-        Dynamically restore before real-time partnerships total linkage for
-        intuitive benefits .
+        Find the perfect course to match your goals and interests. From
+        foundational to advanced levels, our programs support every stage of
+        learning.​ Begin your journey today and achieve your full potential
+        through guided learning.
       </Typography>
       <Box sx={{ mt: 5, width: "100%" }}>
         <Grid container spacing={2}>

@@ -85,9 +85,8 @@ const Instructor = () => {
               ml: 1,
             }}
           >
-            Architect client-centered total linkage for intuitive benefits.
-            Dynamically restore before real-time partnerships total linkage for
-            intuitive benefits
+            Learn from expert educators — bringing academic excellence to every
+            lesson.
           </Typography>
         </Box>
         <Slider {...settings} className="slick_slider">

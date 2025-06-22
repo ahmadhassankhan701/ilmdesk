@@ -105,7 +105,7 @@ export default function Home() {
                 lineHeight: 1.5,
               }}
             >
-              Explore Live <br /> Creative Classes
+              Your All-in-One <br /> Study Companion
             </Typography>
             <Typography
               variant="p"
@@ -119,8 +119,8 @@ export default function Home() {
                 fontWeight: 400,
               }}
             >
-              Architect client-centered total linkage for intuitive benefits
-              restore convergence before real-time partnerships.
+              With over 10 years of trusted educational experience. We make
+              learning clear, engaging, and impact-driven.
             </Typography>
             <Box
               display={"flex"}
