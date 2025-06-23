@@ -9,6 +9,7 @@ import {
   ListItemText,
   Typography,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
@@ -65,7 +66,7 @@ const QuizList = ({ quizzes, type }) => {
               edge="end"
               aria-label="delete"
             >
-              <ArrowForwardIos sx={{ color: "white" }} />
+              <ArrowForwardIos sx={{ color: "white", fontSize: 14 }} />
             </IconButton>
           </Link>
         }
@@ -89,53 +90,59 @@ const QuizList = ({ quizzes, type }) => {
     );
   };
   return (
-    <Box>
-      <Typography
-        sx={{
-          fontSize: 20,
-          fontWeight: 500,
-        }}
-      >
-        Beginner
-      </Typography>
-      <List>
-        {beginners ? (
-          beginners.map((item) => quiz(item))
-        ) : (
-          <ListItem>No quizzes for beginners</ListItem>
-        )}
-      </List>
-      <Typography
-        sx={{
-          fontSize: 20,
-          fontWeight: 500,
-        }}
-      >
-        Intermediate
-      </Typography>
-      <List>
-        {Object.keys(intermediates).length > 0 ? (
-          intermediates.map((item) => quiz(item))
-        ) : (
-          <ListItem>No quizzes for Intermediates</ListItem>
-        )}
-      </List>
-      <Typography
-        sx={{
-          fontSize: 20,
-          fontWeight: 500,
-        }}
-      >
-        Expert
-      </Typography>
-      <List>
-        {Object.keys(experts).length > 0 ? (
-          experts.map((item) => quiz(item))
-        ) : (
-          <ListItem>No quizzes for Experts</ListItem>
-        )}
-      </List>
-    </Box>
+    <Grid container spacing={2}>
+      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+        <Typography
+          sx={{
+            fontSize: 20,
+            fontWeight: 500,
+          }}
+        >
+          Beginner
+        </Typography>
+        <List>
+          {beginners ? (
+            beginners.map((item) => quiz(item))
+          ) : (
+            <ListItem>No quizzes for beginners</ListItem>
+          )}
+        </List>
+      </Grid>
+      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+        <Typography
+          sx={{
+            fontSize: 20,
+            fontWeight: 500,
+          }}
+        >
+          Intermediate
+        </Typography>
+        <List>
+          {Object.keys(intermediates).length > 0 ? (
+            intermediates.map((item) => quiz(item))
+          ) : (
+            <ListItem>No quizzes for Intermediates</ListItem>
+          )}
+        </List>
+      </Grid>
+      <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+        <Typography
+          sx={{
+            fontSize: 20,
+            fontWeight: 500,
+          }}
+        >
+          Expert
+        </Typography>
+        <List>
+          {Object.keys(experts).length > 0 ? (
+            experts.map((item) => quiz(item))
+          ) : (
+            <ListItem>No quizzes for Experts</ListItem>
+          )}
+        </List>
+      </Grid>
+    </Grid>
   );
 };
 

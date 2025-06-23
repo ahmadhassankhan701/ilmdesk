@@ -5,11 +5,11 @@ import {
   Button,
   Container,
   Divider,
-  Grid,
   TextField,
   Typography,
   styled,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import React from "react";
 const FooterGridMainTitle = styled(Typography)({
   fontWeight: "800",
@@ -18,6 +18,7 @@ const FooterGridMainTitle = styled(Typography)({
   textTransform: "capitalize",
   paddingBottom: 40,
   lineHeight: 1.5,
+  textAlign: "left",
 });
 const FooterGridOptions = styled(Typography)({
   fontWeight: 400,
@@ -41,24 +42,24 @@ const Footer = () => {
     >
       <Box display={"flex"} justifyContent={"center"} alignItems={"center"}>
         <Box width={"80%"}>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={4}>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
               <img
                 src="/ilmlogo.png"
                 alt="logo"
-                style={{ width: 150, marginTop: 20 }}
+                style={{ width: 150, marginTop: 20, marginBottom: 20 }}
               />
               <Box display={"flex"} alignItems={"center"} flexWrap={"nowrap"}>
                 <TextField
                   variant="outlined"
                   placeholder="Enter your email"
-                  fullWidth
                   sx={{
                     borderTopLeftRadius: 5,
                     borderBottomLeftRadius: 5,
                     borderTopRightRadius: 0,
                     borderBottomRightRadius: 0,
                     backgroundColor: "#fff",
+                    width: 300,
                   }}
                   InputProps={{
                     style: {
@@ -85,7 +86,13 @@ const Footer = () => {
                 </Button>
               </Box>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid
+              size={{ xs: 12, sm: 6, md: 3 }}
+              display={"flex"}
+              justifyContent={"center"}
+              alignItems={"flex-start"}
+              flexDirection={"column"}
+            >
               <FooterGridMainTitle>Useful Links</FooterGridMainTitle>
               <FooterGridOptions>About Us</FooterGridOptions>
               <FooterGridOptions>Resource Center</FooterGridOptions>
@@ -95,7 +102,7 @@ const Footer = () => {
               <FooterGridOptions>Categories</FooterGridOptions>
               <FooterGridOptions>All Courses</FooterGridOptions>
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FooterGridMainTitle>Courses</FooterGridMainTitle>
               <FooterGridOptions>News & Blogs</FooterGridOptions>
               <FooterGridOptions>Contacts</FooterGridOptions>

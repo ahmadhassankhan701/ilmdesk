@@ -1,14 +1,19 @@
 "use client";
 import { Star, StarOutline } from "@mui/icons-material";
+import PropTypes from "prop-types";
 import {
+  AppBar,
   Avatar,
   Backdrop,
   Box,
   Button,
   CardMedia,
-  Grid,
   Typography,
+  Tabs,
+  Tab,
+  useTheme,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { toast } from "react-toastify";
@@ -26,11 +31,50 @@ import moment from "moment";
 import QuizList from "@/components/Quiz/QuizList";
 import PDFCourseModal from "@/components/Modals/PDFCourseModal";
 import { useAuth } from "@/context/AuthContext";
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`full-width-tabpanel-${index}`}
+      aria-labelledby={`full-width-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          <Typography>{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
+}
+
+TabPanel.propTypes = {
+  children: PropTypes.node,
+  index: PropTypes.number.isRequired,
+  value: PropTypes.number.isRequired,
+};
+
+function a11yProps(index) {
+  return {
+    id: `full-width-tab-${index}`,
+    "aria-controls": `full-width-tabpanel-${index}`,
+  };
+}
 const ContentPage = () => {
   const { state } = useAuth();
   const route = useRouter();
+  const theme = useTheme();
   const searchParam = useSearchParams();
   const courseId = searchParam.get("id");
+  const [value, setValue] = useState(0);
+
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
   const [content, setContent] = useState(null);
   const [quizzes, setQuizzes] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -102,126 +146,52 @@ const ContentPage = () => {
   return (
     <Box display={"flex"} justifyContent={"center"}>
       <PDFCourseModal open={pdfModal} setOpen={setPdfModal} url={pdfURL} />
-      <Box sx={{ mx: { xs: 1, lg: 10 } }} mt={10} width={"80%"}>
+      <Box
+        sx={{ mx: { xs: 1, lg: 10 }, width: { xs: "95%", lg: "80%" } }}
+        mt={10}
+      >
         <Backdrop
           sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
           open={loading}
         >
           <img src={"/loader.gif"} />
         </Backdrop>
-        {content || quizzes ? (
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={8}>
-              <Box sx={{ mt: 5 }}>
-                <Typography
-                  variant="h6"
-                  sx={{ fontSize: 30, fontWeight: 700, color: "#001920" }}
-                >
-                  Overview
-                </Typography>
-                <Typography
-                  variant="div"
-                  component={"div"}
-                  sx={{ fontSize: 16, color: "#001920", mt: 1 }}
-                >
-                  {content && content.theory
-                    ? renderHTML(content.theory)
-                    : "No theory yet"}
-                </Typography>
-              </Box>
-              {content && content.pdfs?.length > 0 && (
-                <Box sx={{ mt: 5 }}>
-                  <Typography
-                    variant="h6"
-                    sx={{ fontSize: 30, fontWeight: 700, color: "#001920" }}
-                  >
-                    Content Files
-                  </Typography>
-                  <Box>
-                    {content.pdfs.map((file, i) => (
-                      <Box
-                        key={i}
-                        sx={{
-                          bgcolor: "#fff",
-                          borderRadius: 2,
-                          boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
-                          p: 1,
-                          mt: 1,
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Box>
-                          <Typography
-                            variant="body1"
-                            sx={{ fontSize: 16, color: "red" }}
-                          >
-                            {file.name}
-                          </Typography>
-                        </Box>
-                        <Box
-                          display={"flex"}
-                          alignItems={"center"}
-                          justifyContent={"center"}
-                          gap={1}
-                        >
-                          <Button
-                            variant="contained"
-                            color="secondary"
-                            size="small"
-                            sx={{ fontSize: 14, textTransform: "none" }}
-                            onClick={() => {
-                              setPdfURL(file?.fileUrl);
-                              setPdfModal(true);
-                            }}
-                          >
-                            Read
-                          </Button>
-                        </Box>
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-              )}
-              {content && content.youtubeLinks?.length > 0 && (
-                <Box sx={{ mt: 5 }}>
-                  <Typography
-                    variant="h6"
-                    sx={{ fontSize: 30, fontWeight: 700, color: "#001920" }}
-                  >
-                    Youtube Videos
-                  </Typography>
-                  <Box>
-                    <Grid container spacing={1} sx={{ padding: 1, mb: 1 }}>
-                      {content.youtubeLinks.map((item, index) => (
-                        <Grid item xs={12} sm={6} key={`quest-${index}`}>
-                          <Box
-                            sx={{
-                              bgcolor: "#fff",
-                              borderRadius: 2,
-                              boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
-                              p: 1,
-                              display: "flex",
-                              flexDirection: "column",
-                              justifyContent: "center",
-                              alignItems: "center",
-                            }}
-                          >
-                            <CardMedia
-                              component="iframe"
-                              title={`YouTube Video ${index + 1}`}
-                              src={`https://www.youtube.com/embed/${item}`}
-                              height={250}
-                              allowFullScreen
-                            />
-                          </Box>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </Box>
-                </Box>
-              )}
+        <Box>
+          <AppBar position="static">
+            <Tabs
+              value={value}
+              onChange={handleChange}
+              indicatorColor="secondary"
+              textColor="inherit"
+              aria-label="full width tabs example"
+              sx={{ bgcolor: "#002935" }}
+              centered
+              variant="scrollable"
+              scrollButtons={false}
+            >
+              <Tab label="Theory" {...a11yProps(0)} />
+              <Tab label="Files" {...a11yProps(1)} />
+              <Tab label="Videos" {...a11yProps(2)} />
+              <Tab label="Quizzes" {...a11yProps(3)} />
+            </Tabs>
+          </AppBar>
+          <TabPanel value={value} index={0} dir={theme.direction}>
+            <Box sx={{ mt: 5 }}>
+              <Typography
+                variant="h6"
+                sx={{ fontSize: 30, fontWeight: 700, color: "#001920" }}
+              >
+                Overview
+              </Typography>
+              <Typography
+                variant="div"
+                component={"div"}
+                sx={{ fontSize: 16, color: "#001920", mt: 1 }}
+              >
+                {content && content.theory
+                  ? renderHTML(content.theory)
+                  : "No theory yet"}
+              </Typography>
               <Box sx={{ mt: 5 }}>
                 <Typography
                   variant="h6"
@@ -312,8 +282,136 @@ const ContentPage = () => {
                   <Typography mt={1}>No reviews available</Typography>
                 )}
               </Box>
-            </Grid>
-            <Grid item xs={12} md={4}>
+            </Box>
+          </TabPanel>
+          <TabPanel value={value} index={1} dir={theme.direction}>
+            {content && content.pdfs?.length > 0 ? (
+              <Box sx={{ mt: 5 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ fontSize: 30, fontWeight: 700, color: "#001920" }}
+                >
+                  Content Files
+                </Typography>
+                <Box>
+                  <Grid container>
+                    {content.pdfs.map((file, i) => (
+                      <Grid key={i} size={{ xs: 12, md: 6, lg: 4 }}>
+                        <Box
+                          sx={{
+                            bgcolor: "#fff",
+                            borderRadius: 2,
+                            boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
+                            p: 1,
+                            mt: 1,
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Box>
+                            <Typography
+                              variant="body1"
+                              sx={{ fontSize: 16, color: "red" }}
+                            >
+                              {file.name}
+                            </Typography>
+                          </Box>
+                          <Box
+                            display={"flex"}
+                            alignItems={"center"}
+                            justifyContent={"center"}
+                            gap={1}
+                          >
+                            <Button
+                              variant="contained"
+                              color="secondary"
+                              size="small"
+                              sx={{ fontSize: 14, textTransform: "none" }}
+                              onClick={() => {
+                                setPdfURL(file?.fileUrl);
+                                setPdfModal(true);
+                              }}
+                            >
+                              Read
+                            </Button>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              </Box>
+            ) : (
+              <Box
+                width={"100%"}
+                display={"flex"}
+                justifyContent={"center"}
+                alignItems={"center"}
+                mt={10}
+              >
+                <Box sx={{ width: 400 }}>
+                  <img src="/no_item.png" width={"100%"} height={"auto"} />
+                </Box>
+              </Box>
+            )}
+          </TabPanel>
+          <TabPanel value={value} index={2} dir={theme.direction}>
+            {content && content.youtubeLinks?.length > 0 ? (
+              <Box sx={{ mt: 5 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ fontSize: 30, fontWeight: 700, color: "#001920" }}
+                >
+                  Youtube Videos
+                </Typography>
+                <Box>
+                  <Grid container spacing={2} sx={{ padding: 1, mb: 1 }}>
+                    {content.youtubeLinks.map((item, index) => (
+                      <Grid
+                        size={{ xs: 12, md: 6, lg: 4 }}
+                        key={`quest-${index}`}
+                      >
+                        <Box
+                          sx={{
+                            bgcolor: "transparent",
+                            border: "none",
+                          }}
+                        >
+                          <CardMedia
+                            component="iframe"
+                            title={`YouTube Video ${index + 1}`}
+                            src={`https://www.youtube.com/embed/${item}`}
+                            height={250}
+                            allowFullScreen
+                            sx={{
+                              borderRadius: 5,
+                              bgcolor: "transparent",
+                              border: "none",
+                            }}
+                          />
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              </Box>
+            ) : (
+              <Box
+                width={"100%"}
+                display={"flex"}
+                justifyContent={"center"}
+                alignItems={"center"}
+                mt={10}
+              >
+                <Box sx={{ width: 400 }}>
+                  <img src="/no_item.png" width={"100%"} height={"auto"} />
+                </Box>
+              </Box>
+            )}
+          </TabPanel>
+          <TabPanel value={value} index={3} dir={theme.direction}>
+            <Grid>
               <Box
                 sx={{
                   bgcolor: "#fff",
@@ -337,36 +435,27 @@ const ContentPage = () => {
                 {quizzes ? (
                   <QuizList type={"courses"} quizzes={quizzes} />
                 ) : (
-                  <Typography>No quizzes available</Typography>
+                  <Box
+                    width={"100%"}
+                    display={"flex"}
+                    justifyContent={"center"}
+                    alignItems={"center"}
+                    mt={10}
+                  >
+                    <Box sx={{ width: 400 }}>
+                      <img src="/no_item.png" width={"100%"} height={"auto"} />
+                    </Box>
+                  </Box>
                 )}
               </Box>
             </Grid>
-          </Grid>
-        ) : (
-          <Box
-            width={"100%"}
-            display={"flex"}
-            justifyContent={"center"}
-            alignItems={"center"}
-            mt={10}
-          >
-            <Box sx={{ width: 400 }}>
-              <img src="/no_item.png" width={"100%"} height={"auto"} />
-              <Typography
-                textAlign={"center"}
-                fontSize={16}
-                my={2}
-                fontWeight={"bold"}
-              >
-                No content available yet
-              </Typography>
-            </Box>
-          </Box>
-        )}
+          </TabPanel>
+        </Box>
       </Box>
     </Box>
   );
 };
+
 const PageWrapper = () => (
   <Suspense
     fallback={
