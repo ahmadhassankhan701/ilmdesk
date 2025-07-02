@@ -10,6 +10,7 @@ import {
   styled,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import { useRouter } from "next/navigation";
 import React from "react";
 const FooterGridMainTitle = styled(Typography)({
   fontWeight: "800",
@@ -28,8 +29,10 @@ const FooterGridOptions = styled(Typography)({
   paddingBottom: 5,
   lineHeight: 1.5,
   textAlign: "left",
+  cursor: "pointer",
 });
 const Footer = () => {
+  const route = useRouter();
   return (
     <Box
       sx={{
@@ -94,20 +97,36 @@ const Footer = () => {
               flexDirection={"column"}
             >
               <FooterGridMainTitle>Useful Links</FooterGridMainTitle>
-              <FooterGridOptions>About Us</FooterGridOptions>
-              <FooterGridOptions>Resource Center</FooterGridOptions>
-              <FooterGridOptions>Careers</FooterGridOptions>
-              <FooterGridOptions>Instructor</FooterGridOptions>
-              <FooterGridOptions>Become a Teacher</FooterGridOptions>
-              <FooterGridOptions>Categories</FooterGridOptions>
-              <FooterGridOptions>All Courses</FooterGridOptions>
+              <FooterGridOptions onClick={() => route.push("/about")}>
+                About Us
+              </FooterGridOptions>
+              <a href="/#instructors" style={{ textDecoration: "none" }}>
+                <FooterGridOptions>Instructor</FooterGridOptions>
+              </a>
+              <FooterGridOptions onClick={() => alert("coming soon")}>
+                Become a Teacher
+              </FooterGridOptions>
+              <FooterGridOptions onClick={() => route.push("/classes")}>
+                Classes
+              </FooterGridOptions>
+              <FooterGridOptions onClick={() => route.push("/courses")}>
+                All Courses
+              </FooterGridOptions>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FooterGridMainTitle>Courses</FooterGridMainTitle>
-              <FooterGridOptions>News & Blogs</FooterGridOptions>
-              <FooterGridOptions>Contacts</FooterGridOptions>
-              <FooterGridOptions>Pricing</FooterGridOptions>
-              <FooterGridOptions>Terms & Conditions</FooterGridOptions>
+              <a href="/#blogs" style={{ textDecoration: "none" }}>
+                <FooterGridOptions>News & Blogs</FooterGridOptions>
+              </a>
+              <FooterGridOptions onClick={() => route.push("/contact")}>
+                Contacts
+              </FooterGridOptions>
+              <FooterGridOptions onClick={() => route.push("/courses")}>
+                Pricing
+              </FooterGridOptions>
+              <FooterGridOptions onClick={() => route.push("/privacy")}>
+                Terms & Conditions
+              </FooterGridOptions>
             </Grid>
           </Grid>
           <Divider sx={{ backgroundColor: "#4A5355", my: 5 }} />
@@ -123,7 +142,8 @@ const Footer = () => {
                 textAlign: "center",
               }}
             >
-              © 2024 AoPerho Learning Management System, All rights reserved.
+              © {new Date().getFullYear()} Ilmdesk Learning Management System,
+              All rights reserved.
             </Typography>
           </Box>
         </Box>

@@ -45,7 +45,9 @@ const Instructor = () => {
       },
     ],
   };
-  const courseCategImg = "/instructor1.jpg";
+  const instructorImg1 = "/Currica/qasim.jpeg";
+  const instructorImg2 = "/Currica/kashif.jpeg";
+  const instructorImg3 = "/Currica/lady.jpeg";
   return (
     <Box
       sx={{
@@ -54,6 +56,7 @@ const Instructor = () => {
         pt: 5,
         pb: 5,
       }}
+      id="instructors"
     >
       <Container sx={{ my: 5 }}>
         <Box>
@@ -91,22 +94,46 @@ const Instructor = () => {
         </Box>
         <Slider {...settings} className="slick_slider">
           <div>
-            <InstructorCard title="Business" image={courseCategImg} />
+            <InstructorCard
+              title="Muhammad Qasim"
+              subtitle="Competitive Chemistry Exams Teacher"
+              image={instructorImg1}
+            />
           </div>
           <div>
-            <InstructorCard title="Business" image={courseCategImg} />
+            <InstructorCard
+              title="DR KASHIF KHAN"
+              subtitle="Mdcat Biology Teacher"
+              image={instructorImg2}
+            />
           </div>
           <div>
-            <InstructorCard title="Business" image={courseCategImg} />
+            <InstructorCard
+              title="Arfa Saleem"
+              subtitle="Professional education and english teacher"
+              image={instructorImg3}
+            />
           </div>
           <div>
-            <InstructorCard title="Business" image={courseCategImg} />
+            <InstructorCard
+              title="Muhammad Qasim"
+              subtitle="Competitive Chemistry Exams Teacher"
+              image={instructorImg1}
+            />
           </div>
           <div>
-            <InstructorCard title="Business" image={courseCategImg} />
+            <InstructorCard
+              title="DR KASHIF KHAN"
+              subtitle="Mdcat Biology Teacher"
+              image={instructorImg2}
+            />
           </div>
           <div>
-            <InstructorCard title="Business" image={courseCategImg} />
+            <InstructorCard
+              title="Arfa Saleem"
+              subtitle="Professional education and english teacher"
+              image={instructorImg3}
+            />
           </div>
         </Slider>
       </Container>

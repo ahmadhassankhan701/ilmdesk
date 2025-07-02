@@ -9,6 +9,7 @@ const Blog = () => {
       alignItems={"center"}
       flexDirection={"column"}
       mt={10}
+      id="blogs"
     >
       <Typography
         component="h2"
@@ -36,30 +37,35 @@ const Blog = () => {
           textAlign: "center",
         }}
       >
-        SSL for your site is a no-brainer best practice. Not only does an SSL
-        help your visitors feel safe interacting with your site—this is
-        particularly important if you run an e-commerce site.
+        Discover our most-loved insights: Dive into our top blogs, handpicked
+        for their impact, relevance, and reader love.
       </Typography>
       <Container sx={{ mt: 5 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6} md={4}>
             <BlogCard
               image={"/popularCourseCard1.jpg"}
-              title={"10K+ Online Courses"}
+              title={
+                "Cracking the Code: A Comprehensive Guide to Competitive Exam Success"
+              }
               subtitle={"View More"}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
             <BlogCard
               image={"/popularCourseCard1.jpg"}
-              title={"10K+ Online Courses"}
+              title={
+                "The Ultimate Competitive Exam Prep Guide: Strategies, Tips, and Tricks"
+              }
               subtitle={"View More"}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
             <BlogCard
               image={"/popularCourseCard2.jpg"}
-              title={"Expert Instructor"}
+              title={
+                "Cracking the Chemistry Code: Tips and Strategies for Lecturer Exam Success"
+              }
               subtitle={"View More"}
             />
           </Grid>

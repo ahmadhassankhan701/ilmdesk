@@ -25,7 +25,7 @@ const Achievement = () => {
               color: "#fff",
             }}
           >
-            50k+
+            10k+
           </Typography>
           <Typography
             sx={{
@@ -46,7 +46,7 @@ const Achievement = () => {
               color: "#fff",
             }}
           >
-            30k+
+            1k+
           </Typography>
           <Typography
             sx={{
@@ -67,7 +67,7 @@ const Achievement = () => {
               color: "#fff",
             }}
           >
-            63+
+            10+
           </Typography>
           <Typography
             sx={{
@@ -76,7 +76,7 @@ const Achievement = () => {
               color: "#fff",
             }}
           >
-            Total Acres Of The Land
+            Customized Courses
           </Typography>
         </AchievementGrid>
         <AchievementGrid item xs={12} sm={6} md={3}>
@@ -88,7 +88,7 @@ const Achievement = () => {
               color: "#fff",
             }}
           >
-            140+
+            100+
           </Typography>
           <Typography
             sx={{

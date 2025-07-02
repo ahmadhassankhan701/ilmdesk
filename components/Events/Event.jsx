@@ -41,9 +41,9 @@ const Event = () => {
         </Typography>
       </Box>
       <Box mt={10}>
-        <EventCard />
-        <EventCard />
-        <EventCard />
+        <EventCard title="University Chemistry Courses" difficulty="Expert" />
+        <EventCard title="English courses" difficulty="Beginner" />
+        <EventCard title="Mdcat Courses" difficulty="Expert" />
         <Box
           display={"flex"}
           justifyContent={"center"}
@@ -61,7 +61,7 @@ const Event = () => {
               mt: 2,
             }}
           >
-            Wants to see the full list of Upcoming Events?
+            Wants to see the full list of Upcoming Courses?
           </Typography>
           <Typography
             component={"h2"}
@@ -74,7 +74,7 @@ const Event = () => {
               mt: 2,
             }}
           >
-            View full Events Over view
+            View full Courses Overview
           </Typography>
         </Box>
       </Box>

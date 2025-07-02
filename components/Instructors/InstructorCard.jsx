@@ -8,8 +8,8 @@ import {
 import { Box, Avatar, Typography, Button } from "@mui/material";
 const InstructorCard = ({
   image = "/heroCard2.png",
-  title = "fgd",
-  subtitle = "dfsfds",
+  title = "John Doe",
+  subtitle = "Bussiness Developer",
 }) => {
   return (
     <Box
@@ -32,6 +32,7 @@ const InstructorCard = ({
           width: "100%",
           height: "80%",
           objectFit: "cover",
+          objectPosition: "center",
           borderTopLeftRadius: 10,
           borderTopRightRadius: 10,
         }}
@@ -51,7 +52,7 @@ const InstructorCard = ({
             mt: 1,
           }}
         >
-          Michael Schofield
+          {title}
         </Typography>
         <Box
           display={"flex"}
@@ -68,7 +69,7 @@ const InstructorCard = ({
               textTransform: "none",
             }}
           >
-            Web Developer
+            {subtitle}
           </Typography>
         </Box>
       </Box>
