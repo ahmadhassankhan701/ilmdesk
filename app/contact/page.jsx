@@ -68,15 +68,15 @@ const page = () => {
             <InfoCard
               image={"/contact1.png"}
               title={"Office Address"}
-              subtitle={"EduQuest E-Learning Agency, Los Angeles NY-1216, USA."}
+              subtitle={
+                "Near Shaukat Khanum Hospital, Lahore, Punjab 54500 Pakistan"
+              }
             />
             <Box mt={2}>
               <InfoCard
                 image={"/contact3.png"}
                 title={"Email Address"}
-                subtitle={
-                  "EduQuest E-Learning Agency, Los Angeles NY-1216, USA."
-                }
+                subtitle={"ilmdesk63@gmail.com"}
               />
             </Box>
           </Grid>
@@ -117,9 +117,9 @@ const page = () => {
                 textAlign: "center",
               }}
             >
-              our worldwide annual spend on digital advertising surpassing
-              billion, it’s no surprise that different apches to online
-              marketing are becoming available
+              We offer a user-friendly interface, 24/7 support, regular updates
+              on content, and a feedback mechanism to ensure you receive the
+              best possible service.
             </Typography>
             <Box sx={{ mt: 5, display: "flex", justifyContent: "center" }}>
               <Grid container spacing={2} width={"80%"}>
@@ -128,7 +128,7 @@ const page = () => {
                     image={"/contact1.png"}
                     title={"Office Address"}
                     subtitle={
-                      "our worldwide annual spend on digital advertising surpassing billion, it’s no surprise that different apches to online marketing."
+                      "Near Shaukat Khanum Hospital, Lahore, Punjab 54500 Pakistan"
                     }
                   />
                 </Grid>
@@ -137,7 +137,7 @@ const page = () => {
                     image={"/contact2.png"}
                     title={"Help & Support"}
                     subtitle={
-                      "our worldwide annual spend on digital advertising surpassing billion, it’s no surprise that different apches to online marketing."
+                      "We offer a user-friendly interface, 24/7 support, regular updates on content, and a feedback mechanism to ensure you receive the best possible service."
                     }
                   />
                 </Grid>
@@ -145,9 +145,7 @@ const page = () => {
                   <InfoCard
                     image={"/contact3.png"}
                     title={"Email Address"}
-                    subtitle={
-                      "our worldwide annual spend on digital advertising surpassing billion, it’s no surprise that different apches to online marketing."
-                    }
+                    subtitle={"ilmdesk63@gmail.com"}
                   />
                 </Grid>
               </Grid>

@@ -146,7 +146,7 @@ const page = () => {
                 <Box display={"flex"} alignItems={"center"} mt={2}>
                   <img src="/sido.png" alt="sido" />
                   <Typography sx={{ color: "#fff", fontSize: "30px", ml: 2 }}>
-                    088 4500 105
+                    +92 308 6403836
                   </Typography>
                 </Box>
               </Box>
@@ -204,9 +204,8 @@ const page = () => {
                     width: "90%",
                   }}
                 >
-                  Architect client-centered total linkage for intuitive
-                  benefits. Dynamically restore convergence before real-time
-                  restore.
+                  We are developing a community for passionate learners, where
+                  you can ask questions
                 </Typography>
                 <Accordion>
                   <AccordionSummary
@@ -217,13 +216,11 @@ const page = () => {
                     1. Why choose us for your education?
                   </AccordionSummary>
                   <AccordionDetails>
-                    We care about safety big time — and so do your site's
-                    visitors. With a Shared Hosting account, you get an SSL
-                    certificate for free to add to your site. In this day and
-                    age, having an SSL for your site is a no-brainer best
-                    practice. Not only does an SSL help your visitors feel safe
-                    interacting with your site — this is particularly important
-                    if you run an e-commerce site.
+                    At ilmDesk, we offer comprehensive study materials, expert
+                    faculty guidance, personalized attention, and regular
+                    updates on exam patterns and syllabus to help you prepare
+                    for competitive exams like MDCAT, Fpsc, ppsc, O level and A
+                    level and university entrance tests.
                   </AccordionDetails>
                 </Accordion>
                 <Accordion>
@@ -235,13 +232,9 @@ const page = () => {
                     2. What we offer to you?
                   </AccordionSummary>
                   <AccordionDetails>
-                    We care about safety big time — and so do your site's
-                    visitors. With a Shared Hosting account, you get an SSL
-                    certificate for free to add to your site. In this day and
-                    age, having an SSL for your site is a no-brainer best
-                    practice. Not only does an SSL help your visitors feel safe
-                    interacting with your site — this is particularly important
-                    if you run an e-commerce site.
+                    We provide study materials (notes, videos, practice
+                    questions), online courses, practice tests, and doubt
+                    clearing sessions to support your educational journey.
                   </AccordionDetails>
                 </Accordion>
                 <Accordion>
@@ -253,13 +246,9 @@ const page = () => {
                     3. How We Provide Services For You?
                   </AccordionSummary>
                   <AccordionDetails>
-                    We care about safety big time — and so do your site's
-                    visitors. With a Shared Hosting account, you get an SSL
-                    certificate for free to add to your site. In this day and
-                    age, having an SSL for your site is a no-brainer best
-                    practice. Not only does an SSL help your visitors feel safe
-                    interacting with your site — this is particularly important
-                    if you run an e-commerce site.
+                    We offer a user-friendly interface, 24/7 support, regular
+                    updates on content, and a feedback mechanism to ensure you
+                    receive the best possible service.
                   </AccordionDetails>
                 </Accordion>
               </Box>

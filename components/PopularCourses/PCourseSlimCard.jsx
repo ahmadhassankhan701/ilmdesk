@@ -117,7 +117,7 @@ const PCourseWideCard = ({ data }) => {
               <Box display={"flex"} gap={2} alignItems={"center"}>
                 <Box display={"flex"} alignItems={"center"} gap={1}>
                   <Avatar
-                    src={data.creatorImage ? data.creatorImage : "/avatar.png"}
+                    src={data.authorImage ? data.authorImage : "/avatar.png"}
                     sx={{ bgcolor: "transparent" }}
                   />
                 </Box>
