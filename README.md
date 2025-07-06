@@ -32,4 +32,5 @@ What this project do:
 If you are looking for platform to teach your students and provide them with the resources, you are at right place
 
 # ilmdesk
-[`next/font`]([https://www.ilmdesk.com/))
+
+[ilmdesk](https://www.ilmdesk.com/)
