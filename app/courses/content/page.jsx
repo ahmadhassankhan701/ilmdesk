@@ -27,6 +27,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/firebase";
 import renderHTML from "react-render-html";
+import { wrapImagesInContainer } from "@/utils/helper";
 import moment from "moment";
 import QuizList from "@/components/Quiz/QuizList";
 import PDFCourseModal from "@/components/Modals/PDFCourseModal";
@@ -189,7 +190,7 @@ const ContentPage = () => {
                 sx={{ fontSize: 16, color: "#001920", mt: 1 }}
               >
                 {content && content.theory
-                  ? renderHTML(content.theory)
+                  ? renderHTML(wrapImagesInContainer(content.theory))
                   : "No theory yet"}
               </Typography>
               <Box sx={{ mt: 5 }}>

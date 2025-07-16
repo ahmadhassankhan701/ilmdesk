@@ -25,10 +25,10 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, useCallback } from "react";
 import { Backdrop } from "@mui/material";
 
 const ChaptersPage = () => {
@@ -37,19 +37,31 @@ const ChaptersPage = () => {
   const branchId = searchParam.get("id");
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(false);
-  const fetchChapters = async () => {
+
+  const fetchChapters = useCallback(async () => {
     if (!branchId) {
       route.back();
       return;
     }
-    try {
-      setLoading(true);
-      const docsRef = collection(db, "chapters");
-      const q = query(docsRef, where("branchID", "==", branchId));
-      const chaptersSnapshot = await getDocs(q);
-      const topicsSnapshot = await getDocs(collection(db, "topics"));
 
-      // Convert snapshots to arrays
+    setLoading(true);
+    try {
+      const chaptersRef = collection(db, "chapters");
+      const topicsRef = collection(db, "topics");
+
+      const chaptersQuery = query(
+        chaptersRef,
+        where("branchID", "==", branchId),
+        orderBy("createdAt", "asc")
+      );
+
+      const topicsQuery = query(topicsRef, orderBy("createdAt", "asc"));
+
+      const [chaptersSnapshot, topicsSnapshot] = await Promise.all([
+        getDocs(chaptersQuery),
+        getDocs(topicsQuery),
+      ]);
+
       const chaptersArray = chaptersSnapshot.docs.map((doc) => ({
         key: doc.id,
         ...doc.data(),
@@ -60,24 +72,23 @@ const ChaptersPage = () => {
         ...doc.data(),
       }));
 
-      // Create structured array
       const structuredData = chaptersArray.map((chapter) => ({
         chapterId: chapter.key,
         chapterName: chapter.name,
         topics: topicsArray.filter((topic) => topic.chapterID === chapter.key),
       }));
-      setLoading(false);
-      return structuredData;
+
+      setChapters(structuredData);
     } catch (error) {
+      console.error("Error fetching chapters and topics:", error);
+    } finally {
       setLoading(false);
-      console.error("Error fetching classes and subjects:", error);
     }
-  };
+  }, [branchId, route]);
+
   useEffect(() => {
-    fetchChapters().then((data) => {
-      setChapters(data);
-    });
-  }, []);
+    fetchChapters();
+  }, [fetchChapters]);
 
   return (
     <Box>

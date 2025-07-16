@@ -31,6 +31,7 @@ import { useTheme } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
+import { wrapImagesInContainer } from "@/utils/helper";
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -159,7 +160,9 @@ const DetailsPage = () => {
                     <Typography variant="h4" fontWeight={700} color="#001920">
                       Overview
                     </Typography>
-                    <Box mt={2}>{renderHTML(content.theory)}</Box>
+                    <Box mt={2}>
+                      {renderHTML(wrapImagesInContainer(content.theory))}
+                    </Box>
                     <Box mt={5}>
                       <Typography variant="h5" fontWeight={700} color="#001920">
                         Reviews
