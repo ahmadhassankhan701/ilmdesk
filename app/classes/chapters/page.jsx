@@ -51,17 +51,15 @@ const ChaptersPage = () => {
 
       const chaptersQuery = query(
         chaptersRef,
-        where("branchID", "==", branchId),
-        orderBy("createdAt", "asc")
+        where("branchID", "==", branchId)
       );
-
-      const topicsQuery = query(topicsRef, orderBy("createdAt", "asc"));
 
       const [chaptersSnapshot, topicsSnapshot] = await Promise.all([
         getDocs(chaptersQuery),
-        getDocs(topicsQuery),
+        getDocs(topicsRef),
       ]);
 
+      // Convert snapshots to arrays
       const chaptersArray = chaptersSnapshot.docs.map((doc) => ({
         key: doc.id,
         ...doc.data(),
@@ -72,6 +70,13 @@ const ChaptersPage = () => {
         ...doc.data(),
       }));
 
+      // Sort both arrays by createdAt
+      chaptersArray.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+      );
+      topicsArray.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+      // Structure the data
       const structuredData = chaptersArray.map((chapter) => ({
         chapterId: chapter.key,
         chapterName: chapter.name,
@@ -124,6 +129,8 @@ const ChaptersPage = () => {
           alignItems={"center"}
           mt={15}
         >
+          {JSON.stringify(chapters, null, 2)}
+
           <Box sx={{ width: 400 }}>
             <img src="/no_item.png" width={"100%"} height={"auto"} />
             <Typography

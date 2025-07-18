@@ -163,7 +163,7 @@ const PublicQuizResult = ({
                   >
                     Explanation
                   </Typography>
-                  <Typography>
+                  <Typography id={"explanation"}>
                     {renderHTML(quiz.questions[current].explanation)}
                   </Typography>
                 </Box>

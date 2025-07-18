@@ -12,6 +12,7 @@ import { styles } from "./PDFStyles";
 import renderHTML from "react-render-html";
 import { Box, IconButton, Modal } from "@mui/material";
 import { Close } from "@mui/icons-material";
+import { renderPdfContent, replaceHtmlTags } from "@/utils/helper";
 const style = {
   width: "100%",
   height: "100%",
@@ -23,7 +24,7 @@ const style = {
 const CircularProgress = ({ percentage, radius = 100, strokeWidth = 5 }) => {
   const circumference = 2 * Math.PI * radius;
   const strokeDasharray = `${
-    (percentage / 100) * circumference
+    ((percentage + 1) / 100) * circumference
   } ${circumference}`;
 
   return (
@@ -84,7 +85,7 @@ export default function PDFQuizDownload({
             <Text>
               The Leading Global Marketplace for Learning and Instruction
             </Text>
-            <Text>City, State 12345</Text>
+            <Text>Near Shaukat Khanum Hospital, Lahore, Punjab</Text>
           </View>
         </View>
         <View style={styles.header}>
@@ -377,11 +378,7 @@ export default function PDFQuizDownload({
                   >
                     Explanation
                   </Text>
-                  <Text style={{ marginTop: 20 }}>
-                    {question.explanation
-                      ? renderHTML(question.explanation)
-                      : ""}
-                  </Text>
+                  {renderPdfContent(replaceHtmlTags(question.explanation))}
                 </View>
               </View>
             ))}
