@@ -75,7 +75,7 @@ const PopularCourses = () => {
           <Grid size={{ xs: 12, lg: 6 }}>
             {content.length > 0 ? (
               <PCourseWideCard
-                image={content[0].image || "/popularCourseWideCard.jpg"}
+                image={content[0].image}
                 title={content[0].title}
                 subject={content[0].subject}
                 author={"Muhammad Qasim"}

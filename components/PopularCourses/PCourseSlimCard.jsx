@@ -26,6 +26,53 @@ const PCourseWideCard = ({ data }) => {
                 borderTopRightRadius: 10,
               }}
             />
+            <Box position="absolute" bottom={10} right={10} zIndex={10}>
+              {/* Price Tag */}
+              <Box
+                sx={{
+                  position: "relative",
+                  transform: "rotate(-8deg)",
+                  bgcolor: "#FF3158",
+                  color: "#fff",
+                  px: 2.5,
+                  py: 1,
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 10px rgba(0, 0, 0, 0.25)",
+                  border: "2px dashed #fff",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 80,
+                  minHeight: 40,
+                }}
+              >
+                {/* Hole (inside the tag) */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 4,
+                    left: 4,
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    bgcolor: "#fff",
+                    border: "2px solid #FF3158",
+                    zIndex: 2,
+                  }}
+                />
+
+                {/* Price Text */}
+                <Typography
+                  sx={{
+                    color: "#fff",
+                    fontWeight: "bold",
+                    fontSize: 16,
+                  }}
+                >
+                  {data.price ? `Rs. ${data.price}` : "Free"}
+                </Typography>
+              </Box>
+            </Box>
           </Box>
           <Box
             sx={{
@@ -113,7 +160,12 @@ const PCourseWideCard = ({ data }) => {
                     ))
                 )}
             </Box>
-            <Box display={"flex"} justifyContent={"space-between"} gap={2}>
+            <Box
+              display={"flex"}
+              justifyContent={"space-between"}
+              flexWrap={"nowrap"}
+              gap={2}
+            >
               <Box display={"flex"} gap={2} alignItems={"center"}>
                 <Box display={"flex"} alignItems={"center"} gap={1}>
                   <Avatar
@@ -133,19 +185,6 @@ const PCourseWideCard = ({ data }) => {
                     {data.author ? data.author : "Qasim"}
                   </Typography>
                 </Box>
-              </Box>
-              <Box display={"flex"} gap={1} alignItems={"center"}>
-                <Typography color={"#36454F"} fontSize={20} fontWeight={"500"}>
-                  {data.price ? `Rs. ${data.price}` : "Free"}
-                </Typography>
-                <Typography
-                  color={"#ff3158"}
-                  fontSize={16}
-                  fontWeight={"500"}
-                  sx={{ textDecoration: "line-through", fontStyle: "italic" }}
-                >
-                  {data.price ? parseInt(data.price) + 100 : "Free"}
-                </Typography>
               </Box>
             </Box>
           </Box>

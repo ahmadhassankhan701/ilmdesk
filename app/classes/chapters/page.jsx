@@ -1,19 +1,11 @@
 "use client";
 import { db } from "@/firebase";
-import {
-  ExpandMore,
-  Folder,
-  NavigateNext,
-  Topic,
-  TopicOutlined,
-  TopicRounded,
-} from "@mui/icons-material";
+import { ExpandMore, Topic } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Box,
-  Breadcrumbs,
   Card,
   CardContent,
   Grid,
@@ -25,7 +17,7 @@ import {
   Skeleton,
   Typography,
 } from "@mui/material";
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState, Suspense, useCallback } from "react";
@@ -71,16 +63,15 @@ const ChaptersPage = () => {
       }));
 
       // Sort both arrays by createdAt
-      chaptersArray.sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-      );
-      topicsArray.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      chaptersArray.sort((a, b) => a.createdAt - b.createdAt);
 
       // Structure the data
       const structuredData = chaptersArray.map((chapter) => ({
         chapterId: chapter.key,
         chapterName: chapter.name,
-        topics: topicsArray.filter((topic) => topic.chapterID === chapter.key),
+        topics: topicsArray
+          .filter((topic) => topic.chapterID === chapter.key)
+          .sort((a, b) => a.createdAt - b.createdAt),
       }));
 
       setChapters(structuredData);

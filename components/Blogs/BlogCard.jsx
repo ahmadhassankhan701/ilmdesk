@@ -50,7 +50,7 @@ const BlogCard = ({ image = "/heroCard2.png", title = "Blog" }) => {
         <Typography
           component={"h2"}
           sx={{
-            fontSize: 22,
+            fontSize: { xs: 18, sm: 20, md: 16, lg: 22 },
             fontWeight: 600,
             color: "rgb(0, 25, 32)",
             my: 2,

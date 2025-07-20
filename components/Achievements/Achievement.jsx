@@ -29,7 +29,7 @@ const Achievement = () => {
           </Typography>
           <Typography
             sx={{
-              fontSize: 18,
+              fontSize: { xs: 18, md: 16 },
               fontWeight: 500,
               color: "#fff",
             }}

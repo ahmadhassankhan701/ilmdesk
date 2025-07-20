@@ -1,7 +1,7 @@
 import { Alarm, Star, StarOutline } from "@mui/icons-material";
 import { Box, Avatar, Typography, Button } from "@mui/material";
 const PCourseWideCard = ({
-  image = "/popularCourseWideCard.jpg",
+  image,
   title = "Nutrition: Build Your Perfect Diet & Meal Plan",
   subject = "nutrition",
   author = "Muhammad Qasim",
@@ -18,7 +18,9 @@ const PCourseWideCard = ({
         "rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px"
       }
       sx={{
-        backgroundImage: `url(${image})`,
+        backgroundImage: `url("${
+          image ? image : "/popularCourseWideCard.jpg"
+        }")`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         height: 420,
