@@ -119,7 +119,7 @@ export default function Home() {
                 fontWeight: 400,
               }}
             >
-              With over 10 years of trusted educational experience. We make
+              With over 10 years of trusted educational experience. We make the
               learning clear, engaging, and impact-driven.
             </Typography>
             <Box
