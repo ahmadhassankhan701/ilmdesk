@@ -64,7 +64,7 @@ function CheckoutPage() {
   const fetchContent = async () => {
     try {
       setLoading(true);
-      const docRef = doc(db, "CourseTheory", courseId);
+      const docRef = doc(db, "courses", courseId);
       const snapshot = await getDoc(docRef);
       if (snapshot.exists()) {
         setContent({ key: snapshot.id, ...snapshot.data(), ratings: [] });

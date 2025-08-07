@@ -31,7 +31,7 @@ const Courses = () => {
     const fetchContent = async () => {
       try {
         setLoading(true);
-        const docsRef = collection(db, "CourseTheory");
+        const docsRef = collection(db, "courses");
         const q = query(
           docsRef,
           where("students", "array-contains", state.user.uid)
@@ -223,7 +223,7 @@ const Courses = () => {
                   <Link
                     style={{ textDecoration: "none" }}
                     href={{
-                      pathname: "/courses/content",
+                      pathname: "/courses/modules",
                       query: {
                         id: item.key,
                       },

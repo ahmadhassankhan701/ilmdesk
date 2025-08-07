@@ -70,7 +70,8 @@ const ContentPage = () => {
   const route = useRouter();
   const theme = useTheme();
   const searchParam = useSearchParams();
-  const courseId = searchParam.get("id");
+  const moduleId = searchParam.get("id");
+  const courseId = searchParam.get("courseId");
   const [value, setValue] = useState(0);
 
   const handleChange = (event, newValue) => {
@@ -83,18 +84,18 @@ const ContentPage = () => {
   const [pdfURL, setPdfURL] = useState("");
   const userId = state && state.user ? state.user.uid : 0;
   useEffect(() => {
-    if (!courseId) {
+    if (!moduleId) {
       route.back();
     } else {
       checkIfEnrolled();
       fetchContent();
       fetchQuizList();
     }
-  }, [courseId]);
+  }, [moduleId]);
   const checkIfEnrolled = async () => {
     try {
       setLoading(true);
-      const docRef = doc(db, "CourseTheory", courseId);
+      const docRef = doc(db, "courses", courseId);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const students = docSnap.data().students;
@@ -111,7 +112,7 @@ const ContentPage = () => {
   };
   const fetchContent = async () => {
     try {
-      const docRef = doc(db, "CourseTheory", courseId);
+      const docRef = doc(db, "CourseTheory", moduleId);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         setContent({ key: docSnap.id, ...docSnap.data() });
@@ -126,7 +127,7 @@ const ContentPage = () => {
     try {
       setLoading(true);
       const quizzesRef = collection(db, "CourseQuizzes");
-      const q = query(quizzesRef, where("courseId", "==", courseId));
+      const q = query(quizzesRef, where("moduleId", "==", moduleId));
       const querySnapshot = await getDocs(q);
       if (querySnapshot.size == 0) {
         setLoading(false);

@@ -57,7 +57,7 @@ const page = () => {
   const fetchContent = async () => {
     try {
       setLoading(true);
-      const docsRef = collection(db, "CourseTheory");
+      const docsRef = collection(db, "courses");
       const q = query(docsRef, limit(6));
       const snapshot = await getDocs(q);
       let items = [];
@@ -78,7 +78,7 @@ const page = () => {
     try {
       setLoading(true);
       const { subject, difficulty } = filter;
-      const docsRef = collection(db, "CourseTheory");
+      const docsRef = collection(db, "courses");
       const q = query(
         docsRef,
         where("difficulty", "==", `${difficulty}`),
