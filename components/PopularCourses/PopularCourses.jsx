@@ -12,7 +12,7 @@ const PopularCourses = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const docsRef = collection(db, "CourseTheory");
+        const docsRef = collection(db, "courses");
         const q = query(docsRef, limit(3));
         const snapshot = await getDocs(q);
         let items = [];
