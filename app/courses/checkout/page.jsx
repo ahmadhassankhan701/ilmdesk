@@ -50,7 +50,7 @@ function CheckoutPage() {
   // Redirect if not logged in
   useEffect(() => {
     if (!state?.user) {
-      route.push("/auth?redirect=/courses/checkout");
+      route.push(`/auth?redirect=/courses/checkout&id=${courseId}`);
     }
   }, [state]);
   // Fetch content and enrollment only when userId & courseId are available

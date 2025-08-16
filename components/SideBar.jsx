@@ -156,7 +156,7 @@ export default function SideBar(props) {
                   fontSize: 15,
                 }}
               >
-                Ahmad Hassan Khan
+                {state?.user?.name || "John Doe"}
               </Typography>
               <Typography
                 sx={{

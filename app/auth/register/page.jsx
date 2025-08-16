@@ -55,6 +55,7 @@ const RegisterPage = () => {
   const route = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
+  const courseId = searchParams.get("id");
   const { setState } = useAuth();
   const loaderImage = "/loader.gif";
   const googleProvider = new GoogleAuthProvider();
@@ -181,7 +182,11 @@ const RegisterPage = () => {
         expires: 7,
       });
       setLoading(false);
-      route.push(redirectTo);
+      if (courseId && redirectTo === "/courses/checkout") {
+        route.push(`${redirectTo}?id=${courseId}`);
+      } else {
+        route.push(redirectTo);
+      }
     } catch (error) {
       setLoading(false);
       toast.error("Something went wrong");

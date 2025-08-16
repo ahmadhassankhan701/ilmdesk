@@ -189,11 +189,7 @@ const CourseSidebar = ({ price, courseId, isUserLoggedIn, modules }) => (
     </List>
     <Box display="flex" justifyContent="center">
       <Link
-        href={
-          isUserLoggedIn
-            ? `/courses/checkout?id=${courseId}`
-            : "/auth?redirect=/courses/checkout"
-        }
+        href={`/courses/checkout?id=${courseId}`}
         style={{ textDecoration: "none" }}
       >
         <Button

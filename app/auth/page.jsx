@@ -54,6 +54,7 @@ const LoginPage = () => {
   const route = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/dashboard";
+  const courseId = searchParams.get("id");
   const { setState } = useAuth();
   const loaderImage = "/loader.gif";
   const googleProvider = new GoogleAuthProvider();
@@ -174,7 +175,14 @@ const LoginPage = () => {
         expires: 7,
       });
       setLoading(false);
-      route.push(redirectTo);
+      // after success
+      if (courseId && redirectTo === "/courses/checkout") {
+        console.log("this happened");
+        route.push(`${redirectTo}?id=${courseId}`);
+      } else {
+        console.log("this not happened");
+        route.push(redirectTo);
+      }
     } catch (error) {
       setLoading(false);
       toast.error("Something went wrong");
@@ -304,7 +312,11 @@ const LoginPage = () => {
                 <Typography textAlign={"center"} alignSelf={"flex-end"}>
                   Not a user?{" "}
                   <Link
-                    href={`/auth/register?redirect=${redirectTo}`}
+                    href={
+                      courseId
+                        ? `/auth/register?redirect=${redirectTo}&id=${courseId}`
+                        : `/auth/register?redirect=${redirectTo}`
+                    }
                     style={{ textDecoration: "none", color: "red" }}
                   >
                     Register now
