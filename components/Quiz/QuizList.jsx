@@ -1,4 +1,4 @@
-import { ArrowForwardIos, Quiz } from "@mui/icons-material";
+import { ArrowForwardIos, Lock, Quiz } from "@mui/icons-material";
 import {
   Avatar,
   Box,
@@ -45,30 +45,43 @@ const QuizList = ({ quizzes, type }) => {
       <ListItem
         key={item.key}
         secondaryAction={
-          <Link
-            href={
-              item.mode === "offline"
-                ? {
-                    pathname: `/${type}/offquiz/${item.key}`,
-                  }
-                : {
-                    pathname: `/${type}/quiz/${item.key}`,
-                  }
-            }
-            style={{ textDecoration: "none", color: "inherit" }}
-          >
+          item.locked ? (
             <IconButton
               sx={{
-                bgcolor: "green",
-                color: "white",
-                "&:hover": { bgcolor: "green" },
+                bgcolor: "gray",
+                "&:hover": { bgcolor: "gray" },
               }}
               edge="end"
-              aria-label="delete"
             >
-              <ArrowForwardIos sx={{ color: "white", fontSize: 14 }} />
+              <Lock sx={{ color: "white", fontSize: 14 }} />
             </IconButton>
-          </Link>
+          ) : (
+            <Link
+              href={
+                item.mode === "offline"
+                  ? {
+                      pathname: `/${type}/offquiz/${item.key}`,
+                    }
+                  : {
+                      pathname: `/${type}/quiz/${item.key}`,
+                    }
+              }
+              style={{ textDecoration: "none", color: "inherit" }}
+            >
+              <IconButton
+                sx={{
+                  bgcolor: "green",
+                  color: "white",
+                  "&:hover": { bgcolor: "green" },
+                }}
+                edge="end"
+                aria-label="delete"
+                disabled={item.locked}
+              >
+                <ArrowForwardIos sx={{ color: "white", fontSize: 14 }} />
+              </IconButton>
+            </Link>
+          )
         }
       >
         <ListItemAvatar>
