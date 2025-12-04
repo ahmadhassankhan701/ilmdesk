@@ -11,7 +11,7 @@ const BlogCard = ({ image = "/heroCard2.png", title = "Blog" }) => {
         "rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px"
       }
       sx={{
-        height: 420,
+        // height: 420,
         width: "100%",
         borderRadius: 5,
       }}
@@ -29,7 +29,7 @@ const BlogCard = ({ image = "/heroCard2.png", title = "Blog" }) => {
       />
       <Box
         sx={{
-          padding: "15px 30px",
+          padding: "15px",
           width: "100%",
         }}
       >

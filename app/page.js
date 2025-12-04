@@ -9,6 +9,8 @@ import {
   Instagram,
   LinkedIn,
   Twitter,
+  WhatsApp,
+  YouTube,
 } from "@mui/icons-material";
 import { Typography } from "@mui/material";
 import { Box, Button } from "@mui/material";
@@ -43,10 +45,30 @@ export default function Home() {
             alignItems={"center"}
             gap={2}
           >
-            <FacebookOutlined sx={{ color: "#fff", fontSize: 24 }} />
-            <Twitter sx={{ color: "#fff", fontSize: 24 }} />
-            <Instagram sx={{ color: "#fff", fontSize: 24 }} />
-            <LinkedIn sx={{ color: "#fff", fontSize: 24 }} />
+            <a
+              href="https://whatsapp.com/channel/0029VaCUDxF5fM5an8mLcp34"
+              target="_blank"
+            >
+              <WhatsApp sx={{ color: "#fff", fontSize: 24 }} />
+            </a>
+            <a
+              href="https://youtube.com/@qasimmahi?si=T1GWa_w274PUNZtt"
+              target="_blank"
+            >
+              <YouTube sx={{ color: "#fff", fontSize: 24 }} />
+            </a>
+            <a
+              href="https://www.facebook.com/share/1Fw8GGhhYC/"
+              target="_blank"
+            >
+              <FacebookOutlined sx={{ color: "#fff", fontSize: 24 }} />
+            </a>
+            <a
+              href="https://www.tiktok.com/@ilmdesk?_r=1&_t=ZN-91wTgPxbK5e"
+              target="_blank"
+            >
+              <LinkedIn sx={{ color: "#fff", fontSize: 24 }} />
+            </a>
             <Typography
               variant="p"
               sx={{

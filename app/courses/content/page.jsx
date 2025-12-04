@@ -11,7 +11,6 @@ import {
   Typography,
   Tabs,
   Tab,
-  useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -68,7 +67,6 @@ function a11yProps(index) {
 const ContentPage = () => {
   const { state } = useAuth();
   const route = useRouter();
-  const theme = useTheme();
   const searchParam = useSearchParams();
   const moduleId = searchParam.get("id");
   const courseId = searchParam.get("courseId");
@@ -137,7 +135,12 @@ const ContentPage = () => {
       querySnapshot.forEach((doc) => {
         quizzesData.push({ key: doc.id, ...doc.data() });
       });
-      setQuizzes(quizzesData);
+      const sortedQuizzes = quizzesData.sort((a, b) => {
+        const dateA = new Date(a.createdAt.seconds * 1000);
+        const dateB = new Date(b.createdAt.seconds * 1000);
+        return dateB - dateA;
+      });
+      setQuizzes(sortedQuizzes);
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -177,8 +180,8 @@ const ContentPage = () => {
               <Tab label="Quizzes" {...a11yProps(3)} />
             </Tabs>
           </AppBar>
-          <TabPanel value={value} index={0} dir={theme.direction}>
-            <Box sx={{ mt: 5 }}>
+          <TabPanel value={value} index={0}>
+            <Box sx={{ mt: 1 }}>
               <Typography
                 variant="h6"
                 sx={{ fontSize: 30, fontWeight: 700, color: "#001920" }}
@@ -286,15 +289,9 @@ const ContentPage = () => {
               </Box>
             </Box>
           </TabPanel>
-          <TabPanel value={value} index={1} dir={theme.direction}>
+          <TabPanel value={value} index={1}>
             {content && content.pdfs?.length > 0 ? (
-              <Box sx={{ mt: 5 }}>
-                <Typography
-                  variant="h6"
-                  sx={{ fontSize: 30, fontWeight: 700, color: "#001920" }}
-                >
-                  Content Files
-                </Typography>
+              <Box>
                 <Box>
                   <Grid container>
                     {content.pdfs.map((file, i) => (
@@ -358,15 +355,9 @@ const ContentPage = () => {
               </Box>
             )}
           </TabPanel>
-          <TabPanel value={value} index={2} dir={theme.direction}>
+          <TabPanel value={value} index={2}>
             {content && content.youtubeLinks?.length > 0 ? (
-              <Box sx={{ mt: 5 }}>
-                <Typography
-                  variant="h6"
-                  sx={{ fontSize: 30, fontWeight: 700, color: "#001920" }}
-                >
-                  Youtube Videos
-                </Typography>
+              <Box>
                 <Box>
                   <Grid container spacing={2} sx={{ padding: 1, mb: 1 }}>
                     {content.youtubeLinks.map((item, index) => (
@@ -412,7 +403,7 @@ const ContentPage = () => {
               </Box>
             )}
           </TabPanel>
-          <TabPanel value={value} index={3} dir={theme.direction}>
+          <TabPanel value={value} index={3}>
             <Grid>
               <Box
                 sx={{
@@ -423,17 +414,6 @@ const ContentPage = () => {
                   boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
                 }}
               >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    mb: 2,
-                    fontSize: 22,
-                    fontWeight: 700,
-                    color: "#001920",
-                  }}
-                >
-                  Free Quizzes
-                </Typography>
                 {quizzes ? (
                   <QuizList type={"courses"} quizzes={quizzes} />
                 ) : (

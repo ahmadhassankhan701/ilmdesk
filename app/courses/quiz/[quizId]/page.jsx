@@ -39,10 +39,17 @@ const page = ({ params }) => {
     score: 0,
     percentage: 0,
   });
-  const studentName = state && state.user ? state.user.name : "John Doe";
-  const studentId = state && state.user ? state.user.uid : 0;
+  const [studentId, setStudentId] = useState("");
+  const [studentName, setStudentName] = useState("");
+
   useEffect(() => {
-    checkIfAttempted();
+    if (state && state.user) {
+      setStudentId(state.user.uid);
+      setStudentName(state.user.name);
+      checkIfAttempted(state.user.uid);
+    } else {
+      route.back();
+    }
   }, [state && state.user]);
   const fetchQuiz = async () => {
     if (!quizId) {
@@ -83,13 +90,13 @@ const page = ({ params }) => {
     setQuizStart(true);
     setTimeLeft(parseInt(quiz.duration * 60));
   };
-  const checkIfAttempted = async () => {
+  const checkIfAttempted = async (stId) => {
     try {
       setLoading(true);
       const docRef = collection(db, `CourseQuizAttempts`);
       const q = query(
         docRef,
-        where("studentId", "==", studentId),
+        where("studentId", "==", stId),
         where("quizId", "==", quizId)
       );
       const snapshot = await getDocs(q);

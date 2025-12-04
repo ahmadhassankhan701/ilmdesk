@@ -76,9 +76,9 @@ const PCourseWideCard = ({ data }) => {
           </Box>
           <Box
             sx={{
-              padding: "15px 30px",
+              padding: "15px 15px",
               width: "100%",
-              height: "250px",
+              minHeight: 250,
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
@@ -116,7 +116,7 @@ const PCourseWideCard = ({ data }) => {
             <Typography
               component={"h2"}
               sx={{
-                fontSize: 22,
+                fontSize: 18,
                 fontWeight: 600,
                 color: "rgb(0, 25, 32)",
                 mt: 2,

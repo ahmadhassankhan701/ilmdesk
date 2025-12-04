@@ -120,8 +120,6 @@ const ChaptersPage = () => {
           alignItems={"center"}
           mt={15}
         >
-          {JSON.stringify(chapters, null, 2)}
-
           <Box sx={{ width: 400 }}>
             <img src="/no_item.png" width={"100%"} height={"auto"} />
             <Typography
@@ -173,6 +171,7 @@ const ChaptersPage = () => {
                               pathname: "/classes/details",
                               query: {
                                 id: topic.key,
+                                chapterId: item.chapterId,
                               },
                             }}
                             style={{

@@ -1,11 +1,4 @@
-import {
-  Alarm,
-  ArrowForward,
-  RateReview,
-  Star,
-  StarOutline,
-} from "@mui/icons-material";
-import { Box, Avatar, Typography, Button } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 const InstructorCard = ({
   image = "/heroCard2.png",
   title = "John Doe",
