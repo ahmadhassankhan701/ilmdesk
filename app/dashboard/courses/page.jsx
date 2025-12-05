@@ -3,19 +3,17 @@ import {
   Box,
   Card,
   CardContent,
-  Divider,
   IconButton,
   InputBase,
   Paper,
   Skeleton,
-  styled,
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import Grid from "@mui/material/Grid2";
 import SideBar from "@/components/SideBar";
 import { useEffect, useState } from "react";
-import { collection, getDocs, limit, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "react-toastify";
@@ -77,40 +75,7 @@ const Courses = () => {
       console.log(error);
     }
   };
-  const Search = styled("div")(({ theme }) => ({
-    backgroundColor: "lightgray",
-    borderRadius: 10,
-    position: "relative",
-    marginLeft: 0,
-    width: "100%",
-    [theme.breakpoints.up("sm")]: {
-      marginLeft: theme.spacing(1),
-      width: "auto",
-    },
-  }));
 
-  const SearchIconWrapper = styled("div")(({ theme }) => ({
-    padding: theme.spacing(0, 2),
-    height: "100%",
-    position: "absolute",
-    pointerEvents: "none",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "gray",
-  }));
-
-  const StyledInputBase = styled(InputBase)(({ theme }) => ({
-    color: "gray",
-    fontSize: 16,
-    width: "100%",
-    "& .MuiInputBase-input": {
-      padding: theme.spacing(1, 1, 1, 0),
-      // vertical padding + font size from searchIcon
-      paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-      width: "20ch",
-    },
-  }));
   return (
     <Box display={"flex"} justifyContent={"center"}>
       <Box width={"100%"}>
@@ -148,7 +113,7 @@ const Courses = () => {
                   p: "2px 4px",
                   display: "flex",
                   alignItems: "center",
-                  width: 400,
+                  width: 300,
                   borderRadius: 3,
                 }}
               >

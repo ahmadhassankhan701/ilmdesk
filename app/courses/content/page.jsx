@@ -136,9 +136,9 @@ const ContentPage = () => {
         quizzesData.push({ key: doc.id, ...doc.data() });
       });
       const sortedQuizzes = quizzesData.sort((a, b) => {
-        const dateA = new Date(a.createdAt.seconds * 1000);
-        const dateB = new Date(b.createdAt.seconds * 1000);
-        return dateB - dateA;
+        const quizA = a.quizNumber;
+        const quizB = b.quizNumber;
+        return quizA - quizB;
       });
       setQuizzes(sortedQuizzes);
       setLoading(false);
@@ -293,7 +293,7 @@ const ContentPage = () => {
             {content && content.pdfs?.length > 0 ? (
               <Box>
                 <Box>
-                  <Grid container>
+                  <Grid container spacing={1}>
                     {content.pdfs.map((file, i) => (
                       <Grid key={i} size={{ xs: 12, md: 6, lg: 4 }}>
                         <Box

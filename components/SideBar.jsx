@@ -12,59 +12,19 @@ import {
   AccountBalance,
   ClassOutlined,
   DashboardOutlined,
+  Home,
   Logout,
   Notifications,
   Person,
   Quiz,
-  Undo,
 } from "@mui/icons-material";
 import Link from "next/link";
-import { Avatar, InputBase, styled } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { Avatar } from "@mui/material";
 import { usePathname, useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { useAuth } from "@/context/AuthContext";
 const drawerWidth = 240;
-const Search = styled("div")(({ theme }) => ({
-  backgroundColor: "lightgray",
-  borderRadius: 20,
-  position: "relative",
-  marginLeft: 0,
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
-    marginLeft: theme.spacing(1),
-    width: "auto",
-  },
-}));
 
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  color: "gray",
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "gray",
-  fontSize: 16,
-  width: "100%",
-  "& .MuiInputBase-input": {
-    padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create("width"),
-    [theme.breakpoints.up("sm")]: {
-      width: "12ch",
-      "&:focus": {
-        width: "20ch",
-      },
-    },
-  },
-}));
 export default function SideBar(props) {
   const { window } = props;
   const { setState, state } = useAuth();
@@ -141,7 +101,7 @@ export default function SideBar(props) {
             mt={2}
             px={1}
             py={2}
-            bgcolor={"#f50366"}
+            bgcolor={"#36454F"}
             borderRadius={2}
             display={"flex"}
             justifyContent={"space-between"}
@@ -194,12 +154,12 @@ export default function SideBar(props) {
                     item.name === "Dashboard" && usePathname() === "/"
                       ? {
                           color: "#fff",
-                          bgcolor: "#f50366",
+                          bgcolor: "#36454F",
                         }
                       : usePathname() === item.route
                       ? {
                           color: "#fff",
-                          bgcolor: "#f50366",
+                          bgcolor: "#36454F",
                         }
                       : {
                           color: "#fff",
@@ -277,9 +237,11 @@ export default function SideBar(props) {
           boxShadow: "none",
           backgroundColor: "transparent",
           borderBottom: "none",
-          height: 100,
+          height: 60,
           display: "flex",
           justifyContent: "center",
+          bgcolor: "#002935",
+          color: "#ffffff",
         }}
       >
         <Toolbar>
@@ -290,7 +252,7 @@ export default function SideBar(props) {
             onClick={handleDrawerToggle}
             sx={{ mr: 2, display: { sm: "none" } }}
           >
-            <MenuIcon />
+            <MenuIcon style={{ color: "#fff" }} />
           </IconButton>
           <Box
             display={"flex"}
@@ -299,9 +261,9 @@ export default function SideBar(props) {
             width={"100%"}
           >
             <Link href={"/"} style={{ textDecoration: "none" }}>
-              <Box display={"flex"} alignItems={"center"} gap={2}>
-                <Undo sx={{ color: "#A6A6A6" }} />
-                <Typography color="#A6A6A6">Back to Home</Typography>
+              <Box display={"flex"} alignItems={"center"} gap={1}>
+                <Home sx={{ color: "#A6A6A6", fontSize: 20 }} />
+                <Typography color="#A6A6A6">Home</Typography>
               </Box>
             </Link>
             <Box
@@ -312,21 +274,11 @@ export default function SideBar(props) {
               px={2}
               py={0.5}
             >
-              <Search>
-                <SearchIconWrapper>
-                  <SearchIcon sx={{ fontSize: 20 }} />
-                </SearchIconWrapper>
-                <StyledInputBase
-                  placeholder="Search…"
-                  inputProps={{ "aria-label": "search" }}
-                />
-              </Search>
-              <Notifications sx={{ color: "#A0AAB4", fontSize: 20 }} />
-              <Logout sx={{ color: "#A0AAB4", fontSize: 20 }} />
+              <Notifications sx={{ color: "#A6A6A6", fontSize: 20 }} />
               <Avatar
-                alt="Remy Sharp"
+                alt={state?.user?.name}
                 src="/images/favicon.png"
-                sx={{ width: 35, height: 35, bgcolor: "pink" }}
+                sx={{ width: 35, height: 35, bgcolor: "#f50366" }}
               />
             </Box>
           </Box>
@@ -355,6 +307,7 @@ export default function SideBar(props) {
               boxSizing: "border-box",
               width: drawerWidth,
               backgroundColor: "#002935",
+              border: "none",
               color: "#ffffff",
             },
           }}
@@ -383,7 +336,6 @@ export default function SideBar(props) {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: 5,
         }}
       >
         <Toolbar />
