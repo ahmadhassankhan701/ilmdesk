@@ -32,7 +32,7 @@ const PCourseWideCard = ({ data }) => {
                 sx={{
                   position: "relative",
                   transform: "rotate(-8deg)",
-                  bgcolor: "#FF3158",
+                  bgcolor: "#0D9AAC",
                   color: "#fff",
                   px: 2.5,
                   py: 1,
@@ -56,7 +56,7 @@ const PCourseWideCard = ({ data }) => {
                     height: 10,
                     borderRadius: "50%",
                     bgcolor: "#fff",
-                    border: "2px solid #FF3158",
+                    border: "2px solid #0D9AAC",
                     zIndex: 2,
                   }}
                 />
@@ -89,10 +89,10 @@ const PCourseWideCard = ({ data }) => {
                 variant="contained"
                 size="small"
                 sx={{
-                  bgcolor: "#FF3158",
+                  bgcolor: "#0D9AAC",
                   textTransform: "none",
                   "&:hover": {
-                    bgcolor: "#FF3158",
+                    bgcolor: "#0D9AAC",
                   },
                 }}
               >

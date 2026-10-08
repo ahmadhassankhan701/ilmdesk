@@ -2,448 +2,262 @@
 import * as React from "react";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
-import Toolbar from "@mui/material/Toolbar";
+import Close from "@mui/icons-material/Close";
 import Button from "@mui/material/Button";
 import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import Tooltip from "@mui/material/Tooltip";
-import PersonAdd from "@mui/icons-material/PersonAdd";
-import Settings from "@mui/icons-material/Settings";
 import Logout from "@mui/icons-material/Logout";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import Cookies from "js-cookie";
 import Link from "next/link";
-const theme = createTheme({
-  typography: {
-    fontFamily: "Poppins, sans-serif",
-  },
-});
-const drawerWidth = 240;
-const navItems = ["Home", "Courses", "Classes", "About", "Contact"];
+import { clearSession } from "@/lib/accounts";
+import { destinationFor } from "@/lib/roles";
+import { pageColumnSx } from "@/lib/pageColumn";
 
-function Nav(props) {
+const navItems = ["Home", "Courses", "Classes", "About", "Contact"];
+const primary = "#0D9AAC";
+const accent = "#FF6B6B";
+const accentHover = "#E85D5D";
+
+function Nav() {
   const route = useRouter();
+  const pathname = usePathname();
   const { state, setState } = useAuth();
-  const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
+  const isLoggedIn = Boolean(state?.user);
+
+  const closeDrawer = () => setMobileOpen(false);
+  const go = (path) => {
+    closeDrawer();
+    route.push(path);
   };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-  const handleDrawerToggle = () => {
-    setMobileOpen((prevState) => !prevState);
-  };
-  const isLoggedIn = state && state.user ? true : false;
-  const drawer = (
-    <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
-      <Box
-        display={"flex"}
-        justifyContent={"center"}
-        alignItems={"center"}
-        height={200}
-      >
-        <img src={"/ilmlogo.png"} style={{ maxWidth: 200, height: "auto" }} />
-      </Box>
-      <Divider sx={{ bgcolor: "white" }} />
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          flexWrap: { xs: "nowrap", sm: "wrap" },
-        }}
-      >
-        {navItems.map((item) => (
-          <Button
-            key={item}
-            sx={[
-              item === "Home" && usePathname() === "/"
-                ? {
-                    color: "#ff3158",
-                  }
-                : usePathname().includes(item.toLowerCase())
-                ? {
-                    color: "#ff3158",
-                  }
-                : {
-                    color: "#fff",
-                  },
-              {
-                my: 1,
-                textTransform: "none",
-                fontSize: { xs: 12, md: 14 },
-                "&:hover": {
-                  color: "#f50366",
-                },
-              },
-            ]}
-            onClick={() => handleNavigation(item)}
-          >
-            {item}
-          </Button>
-        ))}
-      </Box>
-      {!isLoggedIn ? (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 2,
-          }}
-        >
-          <Button
-            size="small"
-            variant={"outlined"}
-            sx={{
-              borderColor: "#ff3158",
-              color: "#ff3158",
-              "&:hover": {
-                color: "#f50366",
-                borderColor: "#f50366",
-              },
-              mx: 1,
-            }}
-            onClick={() => route.push("/auth")}
-          >
-            Login
-          </Button>
-          <Button
-            size="small"
-            variant={"contained"}
-            sx={{
-              bgcolor: "#ff3158",
-              "&:hover": {
-                bgcolor: "#f50366",
-              },
-            }}
-            onClick={() => route.push("/auth/register")}
-          >
-            Register
-          </Button>
-        </Box>
-      ) : (
-        <Button
-          sx={{
-            mt: 3,
-            textTransform: "none",
-          }}
-          color="error"
-          variant="contained"
-          onClick={() => handleNavigation("Dashboard")}
-        >
-          Dashboard
-        </Button>
-      )}
-    </Box>
-  );
   const handleNavigation = (item) => {
     const lowerCased = item.toLowerCase();
-    if (lowerCased === "home") route.push("/");
-    else route.push("/" + lowerCased);
+    go(lowerCased === "home" ? "/" : `/${lowerCased}`);
   };
-  const container =
-    window !== undefined ? () => window().document.body : undefined;
   const handleLogout = () => {
     setAnchorEl(null);
-    Cookies.remove("qasim_lms_auth");
-    setState((state) => ({ ...state, user: null }));
+    closeDrawer();
+    clearSession(setState);
     route.push("/");
   };
+  const isActive = (item) => {
+    if (item === "Home") return pathname === "/";
+    return pathname.startsWith("/" + item.toLowerCase());
+  };
+
+  const linkSx = (item) => ({
+    textTransform: "none",
+    fontSize: 14.5,
+    fontWeight: isActive(item) ? 600 : 500,
+    color: isActive(item) ? "#fff" : "rgba(255,255,255,0.68)",
+    px: 1.6,
+    py: 0.7,
+    minWidth: 0,
+    borderRadius: "10px",
+    whiteSpace: "nowrap",
+    "&:hover": { color: "#fff", backgroundColor: "rgba(255,255,255,0.06)" },
+    ...(isActive(item) && { backgroundColor: "rgba(13, 154, 172, 0.28)", color: "#fff" }),
+  });
+
+  const actions = isLoggedIn ? (
+    <Tooltip title="Account">
+      <IconButton
+        onClick={(event) => setAnchorEl(event.currentTarget)}
+        size="small"
+        aria-controls={open ? "account-menu" : undefined}
+        aria-haspopup="true"
+        aria-expanded={open ? "true" : undefined}
+      >
+        <Avatar src={state.user?.image || undefined} sx={{ width: 34, height: 34, bgcolor: primary, fontSize: 15 }}>
+          {state.user?.name?.charAt(0)}
+        </Avatar>
+      </IconButton>
+    </Tooltip>
+  ) : (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, flexShrink: 0 }}>
+      <Button
+        size="small"
+        onClick={() => route.push("/auth")}
+        sx={{ color: "#fff", textTransform: "none", fontWeight: 500, "&:hover": { backgroundColor: "rgba(255,255,255,0.06)" } }}
+      >
+        Log in
+      </Button>
+      <Button
+        size="small"
+        variant="contained"
+        onClick={() => route.push("/auth/register")}
+        sx={{
+          bgcolor: accent,
+          color: "#fff",
+          textTransform: "none",
+          fontWeight: 600,
+          borderRadius: 999,
+          px: 2,
+          ml: 0.75,
+          boxShadow: "none",
+          "&:hover": { bgcolor: accentHover, boxShadow: "none" },
+        }}
+      >
+        Get started
+      </Button>
+    </Box>
+  );
+
   return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ display: "flex" }}>
-        <CssBaseline />
-        <AppBar
-          component="nav"
-          sx={{
-            backgroundImage: `url(/headerBg.png)`,
-            backgroundColor: "transparent",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "cover",
-            boxShadow: "none",
-          }}
-        >
-          <Toolbar>
-            <Box
-              display={"flex"}
-              alignItems={"center"}
-              justifyContent={"center"}
-              width={"100%"}
-            >
-              <Box
-                sx={{ display: { xs: "flex", sm: "none" } }}
-                alignItems={"center"}
-                justifyContent={"space-between"}
-                width={"100%"}
-              >
-                <Box>
-                  <img
-                    src={"/ilmlogo.png"}
-                    style={{
-                      maxWidth: 150,
-                      height: "auto",
-                      marginLeft: "50px",
-                    }}
-                    onClick={() => route.push("/")}
-                  />
-                </Box>
-                <IconButton
-                  color="inherit"
-                  aria-label="open drawer"
-                  edge="start"
-                  onClick={handleDrawerToggle}
-                  sx={{
-                    ml: { xs: 10 },
-                    display: { sm: "none" },
-                  }}
-                >
-                  <MenuIcon />
-                </IconButton>
-              </Box>
-              <Box
-                display={"flex"}
-                alignItems={"center"}
-                justifyContent={"center"}
-                width={"80%"}
-              >
-                <Box sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}>
-                  <img
-                    src={"/ilmlogo.png"}
-                    style={{
-                      maxWidth: 200,
-                      height: "auto",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => route.push("/")}
-                  />
-                </Box>
-                <Box
-                  sx={{
-                    display: { xs: "none", sm: "flex" },
-                    flexWrap: { xs: "nowrap", sm: "wrap" },
-                  }}
-                >
-                  {navItems.map((item) => (
-                    <Button
-                      key={item}
-                      sx={[
-                        item === "Home" && usePathname() === "/"
-                          ? {
-                              color: "#ff3158",
-                            }
-                          : usePathname().includes(item.toLowerCase())
-                          ? {
-                              color: "#ff3158",
-                            }
-                          : {
-                              color: "#fff",
-                            },
-                        {
-                          ml: 1,
-                          textTransform: "none",
-                          fontSize: { xs: 8, sm: 10, md: 14 },
-                          "&:hover": {
-                            color: "#f50366",
-                          },
-                        },
-                      ]}
-                      onClick={() => handleNavigation(item)}
-                    >
-                      {item}
-                    </Button>
-                  ))}
-                  {isLoggedIn ? (
-                    <React.Fragment>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          textAlign: "center",
-                        }}
-                      >
-                        <Tooltip title="Account settings">
-                          <IconButton
-                            onClick={handleClick}
-                            size="small"
-                            sx={{ ml: 2 }}
-                            aria-controls={open ? "account-menu" : undefined}
-                            aria-haspopup="true"
-                            aria-expanded={open ? "true" : undefined}
-                          >
-                            {state.user?.image ? (
-                              <Avatar
-                                src={state.user.image}
-                                sx={{ width: 32, height: 32 }}
-                              />
-                            ) : (
-                              <Avatar sx={{ width: 32, height: 32 }}>
-                                {state.user?.name?.charAt(0)}
-                              </Avatar>
-                            )}
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                      <Menu
-                        anchorEl={anchorEl}
-                        id="account-menu"
-                        open={open}
-                        onClose={handleClose}
-                        onClick={handleClose}
-                        sx={{
-                          overflow: "visible",
-                          filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
-                          mt: 1.5,
-                          "& .MuiAvatar-root": {
-                            width: 32,
-                            height: 32,
-                            ml: -0.5,
-                            mr: 1,
-                          },
-                          "&::before": {
-                            content: '""',
-                            display: "block",
-                            position: "absolute",
-                            top: 52,
-                            right: 56,
-                            width: 10,
-                            height: 10,
-                            bgcolor: "background.paper",
-                            transform: "translateY(-50%) rotate(45deg)",
-                            zIndex: 0,
-                          },
-                        }}
-                        transformOrigin={{
-                          horizontal: "right",
-                          vertical: "top",
-                        }}
-                        anchorOrigin={{
-                          horizontal: "right",
-                          vertical: "bottom",
-                        }}
-                      >
-                        <Link
-                          href={"/dashboard"}
-                          style={{ textDecoration: "none", color: "inherit" }}
-                        >
-                          <MenuItem>
-                            {state.user?.image ? (
-                              <Avatar
-                                src={state.user.image}
-                                sx={{ width: 32, height: 32 }}
-                              />
-                            ) : (
-                              <Avatar sx={{ width: 32, height: 32 }}>
-                                {state.user?.name?.charAt(0)}
-                              </Avatar>
-                            )}{" "}
-                            Profile
-                          </MenuItem>
-                        </Link>
-                        <Divider />
-                        <MenuItem onClick={handleClose}>
-                          <ListItemIcon>
-                            <PersonAdd fontSize="small" />
-                          </ListItemIcon>
-                          Add another account
-                        </MenuItem>
-                        <MenuItem onClick={handleClose}>
-                          <ListItemIcon>
-                            <Settings fontSize="small" />
-                          </ListItemIcon>
-                          Settings
-                        </MenuItem>
-                        <MenuItem onClick={handleLogout}>
-                          <ListItemIcon>
-                            <Logout fontSize="small" />
-                          </ListItemIcon>
-                          Logout
-                        </MenuItem>
-                      </Menu>
-                    </React.Fragment>
-                  ) : (
-                    <Box
-                      display={"flex"}
-                      justifyContent={"center"}
-                      alignItems={"center"}
-                    >
-                      <Button
-                        size="small"
-                        variant={"outlined"}
-                        sx={{
-                          borderColor: "#ff3158",
-                          color: "#ff3158",
-                          fontSize: { xs: 8, sm: 10, md: 12 },
-                          textTransform: "none",
-                          "&:hover": {
-                            color: "#f50366",
-                            borderColor: "#f50366",
-                          },
-                          mx: 1,
-                        }}
-                        onClick={() => route.push("/auth")}
-                      >
-                        Login
-                      </Button>
-                      <Button
-                        size="small"
-                        variant={"contained"}
-                        sx={{
-                          bgcolor: "#ff3158",
-                          my: 0.4,
-                          fontSize: { xs: 8, sm: 10, md: 12 },
-                          textTransform: "none",
-                          "&:hover": {
-                            bgcolor: "#f50366",
-                          },
-                        }}
-                        onClick={() => route.push("/auth/register")}
-                      >
-                        Register
-                      </Button>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-            </Box>
-          </Toolbar>
-        </AppBar>
-        <nav>
-          <Drawer
-            container={container}
-            variant="temporary"
-            open={mobileOpen}
-            onClose={handleDrawerToggle}
-            ModalProps={{
-              keepMounted: true, // Better open performance on mobile.
-            }}
+    <>
+      <AppBar
+        component="nav"
+        elevation={0}
+        sx={{
+          backgroundColor: "transparent",
+          backgroundImage: "none",
+          boxShadow: "none",
+          pt: 1.5,
+        }}
+      >
+        <Box sx={{ ...pageColumnSx, px: 0 }}>
+          <Box
             sx={{
-              display: { xs: "block", sm: "none" },
-              "& .MuiDrawer-paper": {
-                boxSizing: "border-box",
-                width: drawerWidth,
-                backgroundColor: "#002935",
-              },
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              minHeight: 64,
+              px: { xs: 1.25, md: 2 },
+              borderRadius: "18px",
+              bgcolor: "#0A192F",
+              border: "1px solid rgba(255,255,255,0.08)",
+              backdropFilter: "blur(16px)",
             }}
           >
-            {drawer}
-          </Drawer>
-        </nav>
-      </Box>
-    </ThemeProvider>
+            <Box sx={{ cursor: "pointer", flexShrink: 0, display: "flex" }} onClick={() => route.push("/")}>
+              <img src="/ilmlogo.png" alt="Ilmdesk" style={{ height: 38, width: "auto", maxWidth: 132 }} />
+            </Box>
+            <Box sx={{ display: { xs: "none", md: "flex" }, flexGrow: 1, justifyContent: "center", gap: 0.25 }}>
+              {navItems.map((item) => (
+                <Button key={item} sx={linkSx(item)} onClick={() => handleNavigation(item)}>
+                  {item}
+                </Button>
+              ))}
+            </Box>
+            <Box sx={{ display: { xs: "none", md: "flex" }, ml: "auto" }}>{actions}</Box>
+            <IconButton
+              aria-label="open menu"
+              onClick={() => setMobileOpen(true)}
+              sx={{
+                display: { md: "none" },
+                ml: "auto",
+                color: "#fff",
+                width: 32,
+                height: 32,
+                "&:hover": { bgcolor: "rgba(255,255,255,0.08)" },
+              }}
+            >
+              <MenuIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Box>
+        </Box>
+      </AppBar>
+
+      <Menu
+        anchorEl={anchorEl}
+        id="account-menu"
+        open={open}
+        onClose={() => setAnchorEl(null)}
+        onClick={() => setAnchorEl(null)}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        sx={{ mt: 1 }}
+      >
+        <Link href={destinationFor(state.user)} style={{ textDecoration: "none", color: "inherit" }}>
+          <MenuItem>
+            <Avatar src={state.user?.image || undefined} sx={{ width: 28, height: 28, mr: 1.25, bgcolor: primary, fontSize: 14 }}>
+              {state.user?.name?.charAt(0)}
+            </Avatar>
+            {state.user?.profileComplete ? "Dashboard" : "Finish profile"}
+          </MenuItem>
+        </Link>
+        <Divider />
+        <MenuItem onClick={handleLogout}>
+          <ListItemIcon>
+            <Logout fontSize="small" />
+          </ListItemIcon>
+          Log out
+        </MenuItem>
+      </Menu>
+
+      <Drawer
+        variant="temporary"
+        anchor="top"
+        open={mobileOpen}
+        onClose={closeDrawer}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": {
+            boxSizing: "border-box",
+            width: "100%",
+            height: "100dvh",
+            maxHeight: "100dvh",
+            backgroundColor: "#0A192F",
+            color: "#fff",
+          },
+        }}
+      >
+        <Box sx={{ height: "100%", display: "flex", flexDirection: "column", py: 2.5, px: 2 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Box onClick={() => go("/")} sx={{ cursor: "pointer", display: "flex" }}>
+              <img src="/ilmlogo.png" alt="Ilmdesk" style={{ height: 38, width: "auto" }} />
+            </Box>
+            <IconButton aria-label="Close menu" onClick={closeDrawer} sx={{ color: "#fff" }}>
+              <Close />
+            </IconButton>
+          </Box>
+          <Divider sx={{ borderColor: "rgba(255,255,255,0.1)", mb: 1 }} />
+          {navItems.map((item) => (
+            <Button
+              key={item}
+              fullWidth
+              sx={{ ...linkSx(item), justifyContent: "flex-start", py: 1.3, px: 2, borderRadius: "12px" }}
+              onClick={() => handleNavigation(item)}
+            >
+              {item}
+            </Button>
+          ))}
+          <Divider sx={{ borderColor: "rgba(255,255,255,0.1)", my: 1.5 }} />
+          <Box display="flex" flexDirection="column" gap={1.25} px={1.5} sx={{ mt: "auto", pb: 2 }}>
+            {isLoggedIn ? (
+              <>
+                <Button variant="contained" onClick={() => go(destinationFor(state.user))} sx={{ bgcolor: primary, textTransform: "none", borderRadius: 999, boxShadow: "none" }}>
+                  {state.user?.profileComplete ? "Dashboard" : "Finish profile"}
+                </Button>
+                <Button variant="outlined" startIcon={<Logout />} onClick={handleLogout} sx={{ borderColor: "rgba(255,255,255,0.3)", color: "#fff", textTransform: "none", borderRadius: 999 }}>
+                  Log out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outlined" onClick={() => go("/auth")} sx={{ borderColor: "rgba(255,255,255,0.3)", color: "#fff", textTransform: "none", borderRadius: 999 }}>
+                  Log in
+                </Button>
+                <Button variant="contained" onClick={() => go("/auth/register")} sx={{ bgcolor: accent, textTransform: "none", borderRadius: 999, boxShadow: "none", "&:hover": { bgcolor: accentHover } }}>
+                  Get started
+                </Button>
+              </>
+            )}
+          </Box>
+        </Box>
+      </Drawer>
+    </>
   );
 }
 

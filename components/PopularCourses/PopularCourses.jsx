@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { collection, getDocs, limit, query } from "firebase/firestore";
 import { db } from "@/firebase";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 const PopularCourses = () => {
   const [content, setContent] = useState([]);
@@ -25,7 +26,6 @@ const PopularCourses = () => {
         });
         setContent(items);
       } catch (error) {
-        setLoading(false);
         toast.error("Could not fetch content");
         console.log(error);
       }
@@ -52,7 +52,7 @@ const PopularCourses = () => {
         }}
       >
         Most Popular
-        <span style={{ color: "#ff3158", marginLeft: 10 }}>Course</span>
+        <span style={{ color: "#0D9AAC", marginLeft: 10 }}>Course</span>
       </Typography>
       <Typography
         sx={{

@@ -1,0 +1,295 @@
+rules_version = '2';
+// Production rules for the Ilmdesk site and the admin app.
+// ownerEmail() must stay equal to NEXT_PUBLIC_OWNER_EMAIL.
+// brandAdminId() must stay equal to NEXT_PUBLIC_BRAND_ADMIN_UID.
+// That uid is a brand admin even if the account registered as a teacher.
+// The brand owner email and brand admin id cannot be demoted.
+// Deploying this file replaces the rules in the Firebase console.
+//
+// Catalog reads stay public. Account, payment, and quiz-attempt writes
+// require the signed-in user. Curriculum and course writes require the owner.
+// The admin app has no sign-in yet, so those screens stay denied until the
+// owner is signed in on that app. Demand quizzes and class reviews stay
+// open writes because those pages do not require an account.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function ownerEmail() {
+      return 'qasim@ilmdesk.com';
+    }
+
+    function isOwnerEmail() {
+      return signedIn()
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == ownerEmail();
+    }
+
+    function brandAdminId() {
+      return 'SFKOa7JL73YIFszY6h0LhDF8DBr1';
+    }
+
+    function isBrandAdmin() {
+      return signedIn()
+        && brandAdminId() != ''
+        && request.auth.uid == brandAdminId();
+    }
+
+    function isOwner() {
+      return isOwnerEmail()
+        || isBrandAdmin()
+        || (
+          signedIn()
+          && exists(/databases/$(database)/documents/Users/$(request.auth.uid))
+          && get(/databases/$(database)/documents/Users/$(request.auth.uid)).data.role == 'owner'
+        );
+    }
+
+    function emailMatchesAuth() {
+      return request.auth.token.email != null
+        && request.resource.data.email is string
+        && request.resource.data.email.lower() == request.auth.token.email.lower();
+    }
+
+    match /Users/{userId} {
+      allow read: if signedIn() && (
+        request.auth.uid == userId
+        || isOwner()
+        || (resource.data.role == 'teacher' && resource.data.status == 'active')
+      );
+
+      // ensureAccount() creates this exact shape: student/active, or owner/active
+      // for the owner address. profileComplete stays false until the profile page.
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && emailMatchesAuth()
+        && request.resource.data.keys().hasOnly([
+          'name', 'email', 'image', 'role', 'status', 'createdAt',
+          'profileComplete', 'phone', 'city', 'focus'
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.image is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.profileComplete == false
+        && request.resource.data.phone is string
+        && request.resource.data.city is string
+        && request.resource.data.focus is string
+        && (
+          (request.resource.data.role == 'student' && request.resource.data.status == 'active')
+          || (
+            request.resource.data.role == 'owner'
+            && request.resource.data.status == 'active'
+            && (isOwnerEmail() || isBrandAdmin())
+          )
+        );
+
+      allow update: if signedIn() && (
+        (
+          isOwner()
+          && request.resource.data.role in ['student', 'teacher', 'owner']
+          && request.resource.data.status in ['active', 'pending', 'rejected']
+          && (
+            request.resource.data.role == 'owner'
+            || (
+              (resource.data.get('email', '') == '' || resource.data.email.lower() != ownerEmail())
+              && (brandAdminId() == '' || userId != brandAdminId())
+            )
+          )
+        )
+        || (
+          request.auth.uid == userId
+          && (isOwnerEmail() || isBrandAdmin())
+          && request.resource.data.role == 'owner'
+          && request.resource.data.status == 'active'
+        )
+        || (
+          request.auth.uid == userId
+          && request.resource.data.email == resource.data.email
+          && resource.data.get('profileComplete', false) == false
+          && request.resource.data.profileComplete == true
+          && request.resource.data.name == resource.data.name
+          && request.resource.data.phone is string
+          && request.resource.data.phone.matches('\\+92[0-9]{10}')
+          && request.resource.data.city is string
+          && request.resource.data.city.size() >= 2
+          && request.resource.data.city.size() <= 32
+          && request.resource.data.focus is string
+          && request.resource.data.focus.size() > 0
+          && request.resource.data.focus.size() <= 40
+          && (
+            request.resource.data.role == 'teacher'
+            || request.resource.data.focus in ['Middle', 'Matric', 'O Level', 'Intermediate', 'A Level', 'Bachelor\'s', 'Master\'s']
+          )
+          && (
+            request.resource.data.role != 'teacher'
+            || (
+              request.resource.data.qualification in ['Bachelor\'s', 'Master\'s', 'MPhil', 'PhD']
+              && request.resource.data.institution is string
+              && request.resource.data.institution.size() >= 2
+              && request.resource.data.institution.size() <= 80
+              && request.resource.data.exams is list
+              && request.resource.data.exams.size() > 0
+              && request.resource.data.exams.size() <= 5
+              && request.resource.data.exams.hasOnly(['Matric', 'Intermediate', 'O Level', 'A Level', 'MDCAT'])
+              && request.resource.data.teachingNote is string
+              && request.resource.data.teachingNote.size() >= 40
+              && request.resource.data.teachingNote.size() <= 500
+            )
+          )
+          && (
+            (request.resource.data.role == 'student' && request.resource.data.status == 'active')
+            || (request.resource.data.role == 'teacher' && request.resource.data.status == 'pending')
+            || (
+              request.resource.data.role == resource.data.role
+              && request.resource.data.status == resource.data.status
+            )
+          )
+        )
+        || (
+          request.auth.uid == userId
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.get('profileComplete', false) == resource.data.get('profileComplete', false)
+        )
+      );
+
+      allow delete: if false;
+    }
+
+    match /Students/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isOwner());
+
+      allow create, update: if signedIn()
+        && request.auth.uid == userId
+        && emailMatchesAuth()
+        && request.resource.data.name is string
+        && request.resource.data.image is string
+        && request.resource.data.createdAt is timestamp;
+
+      allow delete: if false;
+    }
+
+    match /Payments/{paymentId} {
+      allow read: if signedIn() && (
+        resource.data.userId == request.auth.uid
+        || isOwner()
+      );
+
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly([
+          'userId', 'userName', 'courseId', 'courseName', 'amount',
+          'status', 'receiptUrl', 'paidAt', 'confirmedAt'
+        ]);
+
+      allow update, delete: if isOwner();
+    }
+
+    match /CourseQuizAttempts/{attemptId} {
+      allow read: if signedIn() && (
+        resource.data.studentId == request.auth.uid
+        || isOwner()
+      );
+
+      allow create: if signedIn()
+        && request.resource.data.studentId == request.auth.uid;
+
+      allow update, delete: if isOwner();
+    }
+
+    match /classes/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    match /subjects/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    match /branches/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    match /chapters/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    match /topics/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    match /courses/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    match /CourseTheory/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    match /CourseQuizzes/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    match /ClassesTheory/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    match /ClassQuizzes/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // Public quiz links collect a name on the page. They are not tied to an account.
+    match /DemandQuiz/{id} {
+      allow read: if true;
+      allow create, delete: if isOwner();
+      allow update: if true;
+    }
+
+    // Older class reviews already published on a lesson. New notes use ClassReviews.
+    match /Reviews/{id} {
+      allow read: if true;
+      allow create, update: if false;
+      allow delete: if isOwner();
+    }
+
+    // A public lesson note is pending until the brand admin approves it.
+    // Rejecting a note deletes the document. It is not stored as rejected.
+    match /ClassReviews/{id} {
+      allow read: if resource.data.status == "approved" || isOwner();
+      allow create: if request.resource.data.keys().hasOnly([
+          'topicId', 'topicName', 'name', 'email', 'rating', 'feedback', 'status', 'createdAt'
+        ])
+        && request.resource.data.status == "pending"
+        && request.resource.data.topicId is string
+        && request.resource.data.topicId.size() > 0
+        && request.resource.data.topicId.size() <= 128
+        && request.resource.data.topicName is string
+        && request.resource.data.topicName.size() > 0
+        && request.resource.data.topicName.size() <= 120
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 32
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 100
+        && request.resource.data.email.matches('^[^@\\sA-Z]+@[^@\\sA-Z]+\\.[^@\\sA-Z]{2,}$')
+        && id == request.resource.data.topicId + '~' + request.resource.data.email
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && request.resource.data.feedback is string
+        && request.resource.data.feedback.size() >= 12
+        && request.resource.data.feedback.size() <= 600
+        && request.resource.data.createdAt is timestamp;
+      allow update: if isOwner()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status == 'approved';
+      allow delete: if isOwner();
+    }
+  }
+}

@@ -136,9 +136,8 @@ const ContentPage = () => {
         quizzesData.push({ key: doc.id, ...doc.data() });
       });
       const sortedQuizzes = quizzesData.sort((a, b) => {
-        const quizA = a.quizNumber;
-        const quizB = b.quizNumber;
-        return quizA - quizB;
+        if (a.order != null || b.order != null) return (a.order ?? 0) - (b.order ?? 0);
+        return (Number(a.quizNumber) || 0) - (Number(b.quizNumber) || 0);
       });
       setQuizzes(sortedQuizzes);
       setLoading(false);

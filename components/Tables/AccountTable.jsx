@@ -47,7 +47,7 @@ export default function StickyHeadTable({ data }) {
       payment.key
     )
   );
-  const rows = row;
+  const rows = row || [];
   function createData(
     courseName,
     amount,
@@ -79,7 +79,7 @@ export default function StickyHeadTable({ data }) {
                   key={column.id}
                   align={column.align}
                   style={{ minWidth: column.minWidth }}
-                  sx={{ bgcolor: "#f50366", color: "#fff" }}
+                  sx={{ bgcolor: "#0A192F", color: "#fff", fontWeight: 600 }}
                 >
                   {column.label}
                 </TableCell>

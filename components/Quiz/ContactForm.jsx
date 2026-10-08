@@ -38,13 +38,13 @@ const ContactForm = () => {
         <Button
           fullWidth
           sx={{
-            bgcolor: "#FF3158",
+            bgcolor: "#0D9AAC",
             fontSize: "16px",
             fontWeight: "600",
             textTransform: "none",
             color: "#ffffff",
             "&:hover": {
-              bgcolor: "#FF3158",
+              bgcolor: "#0D9AAC",
               color: "#ffffff",
               opacity: 0.8,
             },

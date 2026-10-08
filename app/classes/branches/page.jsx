@@ -1,133 +1,207 @@
 "use client";
-import BranchCard from "@/components/SpecialCards/BranchCard";
-import { db } from "@/firebase";
-import {
-  Backdrop,
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Skeleton,
-  Typography,
-} from "@mui/material";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { Suspense, useEffect, useState } from "react";
 
-const BranchesPage = () => {
-  const route = useRouter();
-  const searchParam = useSearchParams();
-  const subjectId = searchParam.get("id");
-  const [branches, setBranches] = useState([]);
-  const [loading, setLoading] = useState(false);
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Box, Skeleton, Typography } from "@mui/material";
+import { ink, muted, primary, primaryHover } from "@/lib/brand";
+import { pageBackground, pageColumnSx } from "@/lib/pageColumn";
+import PageTrail from "@/components/PageTrail";
+import LegacyClassRedirect from "@/components/Classes/LegacyClassRedirect";
+import { resolveSubjectPath } from "@/lib/classCatalog";
+import { classAnchor, modulePath, subjectPath } from "@/lib/classPath";
+import { usePathname, useRouter } from "next/navigation";
+
+function byCreated(items) {
+  const time = (value) => value?.toMillis?.() || value?.getTime?.() || 0;
+  return [...items].sort((a, b) => time(a.createdAt) - time(b.createdAt) || String(a.name || "").localeCompare(String(b.name || "")));
+}
+
+export function SubjectModulesPage({ classSlug, subjectSlug }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [catalog, setCatalog] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
   useEffect(() => {
-    const fetchBranches = async () => {
-      if (!subjectId) {
-        route.back();
+    let active = true;
+
+    (async () => {
+      if (!classSlug || !subjectSlug) {
+        if (active) {
+          setCatalog(null);
+          setFailed(false);
+          setLoading(false);
+        }
         return;
       }
+
       setLoading(true);
-      const docsRef = collection(db, "branches");
-      const q = query(docsRef, where("subjectID", "==", subjectId));
-      const snapshot = await getDocs(q);
-      let branchesArray = [];
-      if (snapshot.size !== 0) {
-        snapshot.forEach((doc) => {
-          branchesArray.push({ key: doc.id, name: doc.data().name });
-        });
-        setBranches(branchesArray);
+      setFailed(false);
+      try {
+        const found = await resolveSubjectPath(classSlug, subjectSlug);
+        if (!active) return;
+        if (!found) {
+          setCatalog(null);
+          return;
+        }
+        const canonical = subjectPath(found.classItem, found.classes, found.subject, found.subjects);
+        if (decodeURI(pathname) !== canonical) {
+          router.replace(canonical);
+        }
+        setCatalog({ ...found, modules: byCreated(found.modules) });
+      } catch (error) {
+        console.error("Error fetching modules:", error);
+        if (active) {
+          setCatalog(null);
+          setFailed(true);
+        }
+      } finally {
+        if (active) setLoading(false);
       }
-      setLoading(false);
+    })();
+
+    return () => {
+      active = false;
     };
-    fetchBranches();
-  }, []);
+  }, [classSlug, subjectSlug, pathname, router]);
+
+  const subject = catalog
+    ? {
+        name: catalog.subject.name || "Subject",
+        className: catalog.classItem.name || "Class",
+      }
+    : null;
+  const modules = catalog?.modules || [];
+  const trail = catalog
+    ? [
+        { label: "Classes", href: "/classes" },
+        { label: catalog.classItem.name || "Class", href: `/classes#${classAnchor(catalog.classItem, catalog.classes)}` },
+        { label: catalog.subject.name || "Subject" },
+      ]
+    : [
+        { label: "Classes", href: "/classes" },
+        { label: "Subject" },
+      ];
 
   return (
-    <Box>
-      {loading ? (
-        // Show Skeleton while loading
-        <Box display={"flex"} justifyContent={"center"}>
-          <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
-            <Grid container spacing={2}>
-              {[...Array(3)].map((_, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Card key={index} sx={{ mb: 2 }}>
-                    <CardContent>
-                      <Skeleton
-                        variant="rectangular"
-                        width={"100%"}
-                        height={118}
-                      />
-                      <Skeleton variant="text" width={"80%"} height={30} />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        </Box>
-      ) : branches.length === 0 ? (
+    <Box sx={{ bgcolor: pageBackground, color: ink, pt: { xs: "96px", md: "112px" }, pb: { xs: 8, md: 12 } }}>
+      <Box sx={pageColumnSx}>
         <Box
-          width={"100%"}
-          display={"flex"}
-          justifyContent={"center"}
-          alignItems={"center"}
-          mt={15}
+          sx={{
+            borderRadius: { xs: "24px", md: "32px" },
+            background: "linear-gradient(145deg, #0A192F 0%, #071322 55%, #123044 100%)",
+            px: { xs: 3, sm: 4.5, md: 6 },
+            py: { xs: 5, md: 7 },
+          }}
         >
-          <Box sx={{ width: 400 }}>
-            <img src="/no_item.png" width={"100%"} height={"auto"} />
+          <Typography
+            component="p"
+            sx={{
+              color: "#fff",
+              border: "1px solid rgba(255,255,255,0.16)",
+              borderRadius: 999,
+              px: 1.5,
+              py: 0.4,
+              fontSize: 12,
+              letterSpacing: 0.6,
+              mb: 2.5,
+              width: "fit-content",
+            }}
+          >
+            Modules
+          </Typography>
+          <Typography
+            component="h1"
+            sx={{
+              color: "#fff",
+              fontWeight: 700,
+              letterSpacing: -1.4,
+              lineHeight: 1.05,
+              fontSize: { xs: 40, sm: 52, md: 64 },
+              maxWidth: 720,
+            }}
+          >
+            {subject?.name || "Choose a subject"}
+          </Typography>
+          <Typography sx={{ color: "rgba(255,255,255,0.72)", fontSize: 17, lineHeight: 1.65, maxWidth: 520, mt: 2.5 }}>
+            {subject
+              ? `Modules inside ${subject.className}. Open one to reach its chapters.`
+              : "Pick a subject from the class list to see its modules."}
+          </Typography>
+          <PageTrail onDark items={loading ? [{ label: "Classes", href: "/classes" }, { label: "Subject" }] : trail} />
+        </Box>
+
+        {loading ? (
+          <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(3, 1fr)" }, gap: 1.5 }}>
+            {[0, 1, 2].map((tile) => (
+              <Skeleton key={tile} variant="rounded" height={168} sx={{ borderRadius: "22px", bgcolor: "rgba(10, 25, 47, 0.08)" }} />
+            ))}
+          </Box>
+        ) : failed ? (
+          <Box sx={{ mt: 3, bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "24px", p: { xs: 3, md: 4 } }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 22 }}>Modules could not be loaded</Typography>
+            <Typography sx={{ color: muted, mt: 1 }}>Refresh the page and try again.</Typography>
+          </Box>
+        ) : !subject ? (
+          <Box sx={{ mt: 3, bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "24px", p: { xs: 3, md: 4 } }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 22 }}>This subject is not on the syllabus</Typography>
             <Typography
-              textAlign={"center"}
-              fontSize={16}
-              my={2}
-              fontWeight={"bold"}
+              component={Link}
+              href="/classes"
+              sx={{ display: "inline-block", color: primary, fontWeight: 600, mt: 1.5, textDecoration: "none", "&:hover": { color: primaryHover } }}
             >
-              No branches available yet
+              Back to classes
             </Typography>
           </Box>
-        </Box>
-      ) : (
-        <Box display={"flex"} justifyContent={"center"}>
-          <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
-            <Grid container spacing={2}>
-              {branches.map((branch) => (
-                <Grid item xs={12} sm={6} md={4} key={branch.key}>
-                  <Link
-                    href={{
-                      pathname: "/classes/chapters",
-                      query: { id: branch.key },
-                    }}
-                    key={branch.key}
-                    style={{ textDecoration: "none", color: "inherit" }}
-                  >
-                    <BranchCard
-                      image="/Currica/chemistry_subject.jpg"
-                      title={branch.name}
-                    />
-                  </Link>
-                </Grid>
-              ))}
-            </Grid>
+        ) : modules.length === 0 ? (
+          <Box sx={{ mt: 3, bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "24px", p: { xs: 3, md: 4 } }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 22 }}>No modules yet</Typography>
+            <Typography sx={{ color: muted, mt: 1 }}>Chapters will show here once a module is published.</Typography>
           </Box>
-        </Box>
-      )}
+        ) : (
+          <Box
+            sx={{
+              mt: { xs: 3, md: 4 },
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "repeat(3, 1fr)" },
+              gap: 1.5,
+            }}
+          >
+            {modules.map((module) => (
+              <Box
+                key={module.id}
+                component={Link}
+                href={modulePath(catalog.classItem, catalog.classes, catalog.subject, catalog.subjects, module, modules)}
+                sx={{
+                  bgcolor: "#fff",
+                  border: "1px solid #E2E8EC",
+                  borderRadius: "22px",
+                  p: { xs: 2.5, md: 3 },
+                  minHeight: 168,
+                  textDecoration: "none",
+                  color: ink,
+                  display: "flex",
+                  flexDirection: "column",
+                  "&:hover": { borderColor: primary },
+                }}
+              >
+                <Typography sx={{ color: primary, fontSize: 13, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase" }}>
+                  Module
+                </Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: { xs: 22, md: 24 }, letterSpacing: -0.4, mt: 1, lineHeight: 1.2 }}>
+                  {module.name}
+                </Typography>
+                <Typography sx={{ color: muted, mt: "auto", pt: 2, fontSize: 14, fontWeight: 600 }}>Open chapters</Typography>
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
     </Box>
   );
-};
+}
 
-const PageWrapper = () => (
-  <Suspense
-    fallback={
-      <Backdrop
-        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={true}
-      >
-        <img src={"/loader.gif"} width={100} height={100} />
-      </Backdrop>
-    }
-  >
-    <BranchesPage />
-  </Suspense>
-);
-export default PageWrapper;
+export default function Page() {
+  return <LegacyClassRedirect kind="subject" />;
+}

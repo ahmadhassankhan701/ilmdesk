@@ -12,6 +12,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import Grid from "@mui/material/Grid2";
 import SideBar from "@/components/SideBar";
+import PageTitle from "@/components/Dashboard/PageTitle";
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase";
@@ -77,64 +78,39 @@ const Courses = () => {
   };
 
   return (
-    <Box display={"flex"} justifyContent={"center"}>
-      <Box width={"100%"}>
+    <Box>
         <SideBar>
-          <Grid container spacing={1} mb={2} width={"100%"}>
-            <Grid
-              display={"flex"}
-              justifyContent={"space-between"}
-              alignItems={"center"}
-              size={12}
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: { xs: "stretch", md: "flex-end" }, gap: 2, flexDirection: { xs: "column", md: "row" } }}>
+            <PageTitle eyebrow="Learning" title="Courses" body="Courses you are enrolled in." />
+            <Paper
+              component="form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                handleFilter();
+              }}
+              sx={{
+                mb: { md: 3.5 },
+                p: "4px 6px",
+                display: "flex",
+                alignItems: "center",
+                width: { xs: "100%", md: 280 },
+                borderRadius: 999,
+                boxShadow: "none",
+                border: "1px solid rgba(17,17,19,0.08)",
+              }}
             >
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: 28,
-                    fontWeight: "800",
-                    color: "#A6A6A6",
-                  }}
-                >
-                  Courses
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: 16,
-                    fontWeight: "800",
-                    color: "#A0AAB4",
-                  }}
-                >
-                  Find Your Courses here...
-                </Typography>
-              </Box>
-              <Paper
-                component="form"
-                sx={{
-                  p: "2px 4px",
-                  display: "flex",
-                  alignItems: "center",
-                  width: 300,
-                  borderRadius: 3,
-                }}
-              >
-                <InputBase
-                  sx={{ ml: 1, flex: 1 }}
-                  placeholder="Search by Title"
-                  inputProps={{ "aria-label": "search course" }}
-                  value={filterText}
-                  onChange={(e) => setFilterText(e.target.value)}
-                />
-                <IconButton
-                  type="button"
-                  sx={{ p: "10px" }}
-                  aria-label="search"
-                  onClick={handleFilter}
-                >
-                  <SearchIcon />
-                </IconButton>
-              </Paper>
-            </Grid>
-          </Grid>
+              <InputBase
+                sx={{ ml: 1.5, flex: 1, fontSize: 14 }}
+                placeholder="Search by title"
+                inputProps={{ "aria-label": "search course" }}
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+              />
+              <IconButton type="submit" sx={{ p: "8px" }} aria-label="search" onClick={handleFilter}>
+                <SearchIcon />
+              </IconButton>
+            </Paper>
+          </Box>
           <Grid container spacing={1}>
             {loading ? (
               // Show Skeleton while loading
@@ -164,23 +140,11 @@ const Courses = () => {
                 ))}
               </Grid>
             ) : filteredcourses.length === 0 ? (
-              <Box
-                width={"100%"}
-                display={"flex"}
-                justifyContent={"center"}
-                alignItems={"center"}
-              >
-                <Box sx={{ width: 400 }}>
-                  <img src="/no_item.png" width={"100%"} height={"auto"} />
-                  <Typography
-                    textAlign={"center"}
-                    fontSize={16}
-                    my={2}
-                    fontWeight={"bold"}
-                  >
-                    No course available yet
-                  </Typography>
-                </Box>
+              <Box sx={{ bgcolor: "#fff", borderRadius: "22px", p: 3, width: "100%" }}>
+                <Typography sx={{ fontWeight: 700, color: "#0A192F" }}>No enrolled courses yet.</Typography>
+                <Typography sx={{ color: "#5C6B7A", mt: 0.75 }}>
+                  A course appears here after a payment is approved.
+                </Typography>
               </Box>
             ) : (
               filteredcourses.map((item) => (
@@ -201,7 +165,6 @@ const Courses = () => {
             )}
           </Grid>
         </SideBar>
-      </Box>
     </Box>
   );
 };

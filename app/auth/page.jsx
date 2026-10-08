@@ -1,386 +1,213 @@
 "use client";
-import {
-  Box,
-  Typography,
-  Button,
-  Grid,
-  TextField,
-  Backdrop,
-} from "@mui/material";
-import React, { Suspense } from "react";
-import Cookies from "js-cookie";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
-import { toast } from "react-toastify";
-import { styled } from "@mui/material/styles";
-import {
-  signInWithPopup,
-  GoogleAuthProvider,
-  signInWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
-import { auth, db } from "../../firebase";
-import { useAuth } from "@/context/AuthContext";
-import Link from "next/link";
-import GoogleSignInButton from "@/components/SpecialCards/GoogleSignInButton";
-import { doc, getDoc, setDoc } from "firebase/firestore";
 
-const StyledTextField = styled(TextField)({
-  "& label": {
-    color: "#A0AAB4",
-  },
-  "& label.Mui-focused": {
-    color: "#A0AAB4",
-  },
-  "& .MuiInput-underline:after": {
-    borderBottomColor: "#A0AAB4",
-  },
-  "& .MuiOutlinedInput-root": {
-    "& fieldset": {
-      borderColor: "#A0AAB4",
-      color: "#A0AAB4",
-    },
-    "&:hover fieldset": {
-      borderColor: "#A0AAB4",
-      color: "#A0AAB4",
-    },
-    "&.Mui-focused fieldset": {
-      borderColor: "#A0AAB4",
-      color: "#A0AAB4",
-    },
-  },
-});
-const LoginPage = () => {
+import { Suspense, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Box, Button, Typography } from "@mui/material";
+import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { toast } from "react-toastify";
+import { auth } from "@/firebase";
+import { useAuth } from "@/context/AuthContext";
+import GoogleSignInButton from "@/components/SpecialCards/GoogleSignInButton";
+import AuthFrame, { Field, ink, muted, OrDivider, PasswordField, pillButton, primary, primaryHover } from "@/components/AuthFrame";
+import { clearSession, establishSession, hasAccountRecord, needsEmailVerification, sendAccountVerification } from "@/lib/accounts";
+import { authSearch, destinationFor, isOwnerEmail } from "@/lib/roles";
+import { authErrorMessage, emailError, passwordError } from "@/lib/formValidation";
+
+function LoginPage() {
   const route = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/dashboard";
-  const courseId = searchParams.get("id");
+  const redirectTo = searchParams.get("redirect") || "";
+  const courseId = searchParams.get("id") || "";
   const { setState } = useAuth();
-  const loaderImage = "/loader.gif";
-  const googleProvider = new GoogleAuthProvider();
-  const [details, setDetails] = useState({
-    email: "",
-    password: "",
-  });
+  const [details, setDetails] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const handleChange = (name, val) => {
-    setDetails({
-      ...details,
-      [name]: val,
-    });
+  const [resending, setResending] = useState(false);
+  const busy = loading || resending;
+  const registerHref = `/auth/register${authSearch({ redirectTo, courseId })}`;
+
+  const finishSignIn = async (firebaseUser) => {
+    await firebaseUser.reload();
+    const fresh = auth.currentUser || firebaseUser;
+    if (needsEmailVerification(fresh)) {
+      try {
+        await sendAccountVerification(fresh);
+        toast.error(`Verify ${fresh.email} before you log in. We sent the verification email again.`);
+      } catch (error) {
+        toast.error(
+          error.code === "auth/too-many-requests"
+            ? `Verify ${fresh.email} before you log in. Use the email we already sent.`
+            : `Verify ${fresh.email} before you log in.`
+        );
+      }
+      await clearSession(setState);
+      return;
+    }
+    const user = await establishSession(fresh, { setState });
+    route.push(destinationFor(user, { redirectTo, courseId }));
   };
-  const handleSubmit = async () => {
-    if (details.email === "" || details.password === "") {
-      toast.error("Please fill all the fields");
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const nextErrors = {
+      email: emailError(details.email),
+      password: passwordError(details.password, { login: true }),
+    };
+    setErrors(nextErrors);
+    const message = nextErrors.email || nextErrors.password;
+    if (message) {
+      toast.error(message);
       return;
     }
     try {
       setLoading(true);
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        details.email,
-        details.password
-      );
-      handleUserVerification(userCredential.user);
+      const userCredential = await signInWithEmailAndPassword(auth, details.email.trim(), details.password);
+      await finishSignIn(userCredential.user);
     } catch (error) {
+      toast.error(authErrorMessage(error));
+    } finally {
       setLoading(false);
-      toast.error(error.message);
-      console.log(error);
     }
   };
-  const handleUserVerification = async (users) => {
+
+  const resendVerification = async () => {
+    const nextErrors = {
+      email: emailError(details.email),
+      password: passwordError(details.password, { login: true }),
+    };
+    setErrors(nextErrors);
+    const message = nextErrors.email || nextErrors.password;
+    if (message) {
+      toast.error(message);
+      return;
+    }
     try {
-      if (users.emailVerified) {
-        const user = {
-          uid: users.uid,
-          name: users.displayName,
-          email: users.email,
-          image: users.photoURL,
-        };
-        const stateData = { user };
-        setState({
-          user: stateData.user,
-        });
-        Cookies.set("qasim_lms_auth", JSON.stringify(stateData), {
-          expires: 7,
-        });
-        setLoading(false);
-        route.push(redirectTo);
-      } else {
-        // await sendEmailVerification(auth.currentUser);
-        await signOut(auth);
-        setLoading(false);
-        toast.error("Verification email sent to you. Verify then Login!");
+      setResending(true);
+      const userCredential = await signInWithEmailAndPassword(auth, details.email.trim(), details.password);
+      await userCredential.user.reload();
+      const fresh = auth.currentUser || userCredential.user;
+      if (!needsEmailVerification(fresh)) {
+        toast.success("This email is already verified. Log in.");
+        await clearSession(setState);
+        return;
       }
+      try {
+        await sendAccountVerification(fresh);
+        toast.success(`Verification email sent to ${fresh.email}.`);
+      } catch (error) {
+        toast.error(
+          error.code === "auth/too-many-requests"
+            ? `A verification email is already on its way to ${fresh.email}. Check your inbox.`
+            : authErrorMessage(error)
+        );
+      }
+      await clearSession(setState);
     } catch (error) {
-      setLoading(false);
-      alert(error.message);
-      console.log(error);
+      toast.error(authErrorMessage(error));
+    } finally {
+      setResending(false);
     }
   };
+
   const googleLogin = async () => {
-    signInWithPopup(auth, googleProvider)
-      .then((result) => {
-        // The signed-in user info.
-        const data = result.user;
-        handleUserState(data);
-      })
-      .catch((error) => {
-        // Handle Errors here.
-        const errorMessage = error.message;
-        // The email of the user's account used.
-        const email = error.customData.email;
-        // The AuthCredential type that was used.
-        const credential = GoogleAuthProvider.credentialFromError(error);
-        // ...
-        toast.error(errorMessage);
-        console.log(errorMessage);
-        console.log(email);
-        console.log(credential);
-      });
-  };
-  const saveUserDatabase = async (data) => {
-    try {
-      let userData = {
-        name: data.displayName,
-        email: data.email,
-        image: data.photoURL || "",
-        createdAt: new Date(),
-      };
-      await setDoc(doc(db, "Students", data.uid), userData);
-    } catch (error) {
-      setLoading(false);
-      toast.error("User data not saved");
-      console.log(error);
-    }
-  };
-  const handleUserState = async (data) => {
     try {
       setLoading(true);
-      const docSnap = await getDoc(doc(db, "Students", data.uid));
-      if (docSnap.exists() === false) {
-        saveUserDatabase(data);
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      const firebaseUser = result.user;
+      const known = isOwnerEmail(firebaseUser.email) || (await hasAccountRecord(firebaseUser.uid));
+      if (!known) {
+        await clearSession(setState);
+        toast.error("No account uses that Google email yet. Create an account first.");
+        route.push(registerHref);
+        return;
       }
-      let user = {
-        uid: data.uid,
-        name: data.displayName,
-        email: data.email,
-        image: data.photoURL,
-      };
-      const stateData = { user };
-      setState({
-        user: stateData.user,
-      });
-      Cookies.set("qasim_lms_auth", JSON.stringify(stateData), {
-        expires: 7,
-      });
-      setLoading(false);
-      // after success
-      if (courseId && redirectTo === "/courses/checkout") {
-        console.log("this happened");
-        route.push(`${redirectTo}?id=${courseId}`);
-      } else {
-        console.log("this not happened");
-        route.push(redirectTo);
-      }
+      await finishSignIn(firebaseUser);
     } catch (error) {
+      toast.error(authErrorMessage(error));
+    } finally {
       setLoading(false);
-      toast.error("Something went wrong");
-      console.log(error);
     }
   };
-  return (
-    <Box>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          mt: 15,
-        }}
-      >
-        {loading && (
-          <Box
-            sx={{
-              position: "absolute",
-              backgroundColor: "#212333",
-              opacity: 0.7,
-              zIndex: 999,
-              width: "100%",
-              height: "100%",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <img src={loaderImage} />
-          </Box>
-        )}
-        <Grid
-          container
-          display={"flex"}
-          justifyContent={"center"}
-          alignItems={"center"}
-        >
-          <Grid
-            item
-            xs={12}
-            sm={6}
-            lg={4}
-            border={"none"}
-            bgcolor={"#fff"}
-            borderRadius={2}
-            sx={{
-              boxShadow: "0px 4px 4px rgba(0, 0, 0, 0.25)",
-            }}
-            mx={1}
-          >
-            <Box
-              sx={{
-                background: `url(/ResourcesTopBanner.png)`,
-                backgroundColor: "#000000",
-                backgroundSize: "cover",
-                height: "20vh",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: 2,
-              }}
-            >
-              <Typography
-                variant={"h5"}
-                textAlign={"center"}
-                mt={1}
-                mb={5}
-                fontWeight={"bold"}
-                color={"#fff"}
-              >
-                Student Login
-              </Typography>
-            </Box>
-            <Box padding={5}>
-              <StyledTextField
-                id="outlined-basic"
-                label="Your email"
-                variant="outlined"
-                fullWidth
-                sx={{ my: 1 }}
-                InputProps={{
-                  style: {
-                    color: "#A0AAB4",
-                  },
-                }}
-                onChange={(e) => handleChange("email", e.target.value)}
-              />
-              <StyledTextField
-                id="outlined-basics"
-                label="Password"
-                variant="outlined"
-                fullWidth
-                sx={{
-                  my: 1,
-                }}
-                InputProps={{
-                  style: {
-                    color: "#A0AAB4",
-                  },
-                  type: "password",
-                }}
-                onChange={(e) => handleChange("password", e.target.value)}
-              />
-              <Button
-                variant="contained"
-                sx={{
-                  color: "#fff",
-                  backgroundColor: "#ff3158",
-                  my: 1,
-                  "&:hover": { backgroundColor: "#f50366" },
-                }}
-                fullWidth
-                onClick={handleSubmit}
-              >
-                Submit
-              </Button>
-              <Box
-                display={"flex"}
-                justifyContent={"flex-end"}
-                alignItems={"center"}
-                my={2}
-              >
-                <Typography textAlign={"center"} alignSelf={"flex-end"}>
-                  Not a user?{" "}
-                  <Link
-                    href={
-                      courseId
-                        ? `/auth/register?redirect=${redirectTo}&id=${courseId}`
-                        : `/auth/register?redirect=${redirectTo}`
-                    }
-                    style={{ textDecoration: "none", color: "red" }}
-                  >
-                    Register now
-                  </Link>
-                </Typography>
-              </Box>
-              <Typography
-                variant="p"
-                sx={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  color: "gray",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 3,
-                  textAlign: "center",
-                }}
-              >
-                <span
-                  style={{
-                    width: "42%",
-                    height: 2,
-                    marginBottom: 5,
-                    display: "inline-block",
-                    background: "gray",
-                  }}
-                ></span>
-                OR
-                <span
-                  style={{
-                    width: "42%",
-                    height: 2,
-                    marginBottom: 5,
-                    display: "inline-block",
-                    background: "gray",
-                  }}
-                ></span>
-              </Typography>
-              <GoogleSignInButton
-                title={"Sign in with Google"}
-                onClick={googleLogin}
-              />
-            </Box>
-          </Grid>
-        </Grid>
-      </Box>
-    </Box>
-  );
-};
 
-const PageWrapper = () => (
-  <Suspense
-    fallback={
-      <Backdrop
-        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={true}
-      >
-        <img src={"/loader.gif"} width={100} height={100} />
-      </Backdrop>
-    }
-  >
-    <LoginPage />
-  </Suspense>
-);
-export default PageWrapper;
+  return (
+    <AuthFrame
+      eyebrow="Log in"
+      title="Back to your classes."
+      body="Log in continues an account that is already registered. A new account starts on the register page, then finishes a profile before the dashboard."
+    >
+      <Box component="form" onSubmit={handleSubmit}>
+        <Typography sx={{ fontSize: 28, fontWeight: 700, letterSpacing: -0.6, mb: 2.5 }}>Log in</Typography>
+        <Field
+          label="Email"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="you@email.com"
+          error={errors.email}
+          value={details.email}
+          onChange={(event) => {
+            setDetails({ ...details, email: event.target.value });
+            setErrors((current) => ({ ...current, email: "" }));
+          }}
+        />
+        <PasswordField
+          required
+          autoComplete="current-password"
+          placeholder="Your password"
+          error={errors.password}
+          value={details.password}
+          onChange={(event) => {
+            setDetails({ ...details, password: event.target.value });
+            setErrors((current) => ({ ...current, password: "" }));
+          }}
+        />
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={busy}
+          sx={{ ...pillButton, bgcolor: primary, color: "#fff", "&:hover": { bgcolor: primaryHover, boxShadow: "none" } }}
+        >
+          {loading ? "Signing in…" : "Log in"}
+        </Button>
+        <Typography sx={{ color: muted, mt: 2.5, fontSize: 14 }}>
+          Missed the verification email?{" "}
+          <Button
+            type="button"
+            disabled={busy}
+            onClick={resendVerification}
+            sx={{
+              p: 0,
+              minWidth: 0,
+              color: ink,
+              fontWeight: 600,
+              fontSize: 14,
+              lineHeight: 1.4,
+              textTransform: "none",
+              verticalAlign: "baseline",
+              "&:hover": { bgcolor: "transparent", color: primary },
+            }}
+          >
+            {resending ? "Sending…" : "Send it again"}
+          </Button>
+        </Typography>
+        <Typography sx={{ color: muted, mt: 1.25, fontSize: 14 }}>
+          New to Ilmdesk?{" "}
+          <Link href={registerHref} style={{ color: ink, fontWeight: 600 }}>
+            Create an account
+          </Link>
+        </Typography>
+        <OrDivider />
+        <GoogleSignInButton title="Continue with Google" onClick={googleLogin} disabled={busy} />
+      </Box>
+    </AuthFrame>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPage />
+    </Suspense>
+  );
+}

@@ -234,7 +234,7 @@ const page = () => {
               sx={{
                 mt: 2,
                 mt: 2,
-                bgcolor: "#ff3158",
+                bgcolor: "#0D9AAC",
                 "&:hover": {
                   bgcolor: "#f50366",
                 },

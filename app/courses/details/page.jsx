@@ -153,7 +153,7 @@ const CourseSidebar = ({ price, courseId, isUserLoggedIn, modules }) => (
     <Typography fontSize={18} fontWeight={700} color="#001920" mb={0.5}>
       Course Pricing
     </Typography>
-    <Typography fontSize={36} fontWeight={700} color="#FF3158" mb={0.5}>
+    <Typography fontSize={36} fontWeight={700} color="#0D9AAC" mb={0.5}>
       {price ? `Rs. ${price}` : "Free"}
     </Typography>
     <Typography fontSize={22} fontWeight={700} color="#001920" mb={2}>
@@ -194,12 +194,12 @@ const CourseSidebar = ({ price, courseId, isUserLoggedIn, modules }) => (
       >
         <Button
           sx={{
-            bgcolor: "#FF3158",
+            bgcolor: "#FF6B6B",
             textTransform: "none",
             color: "#fff",
             borderRadius: 2,
             width: 250,
-            "&:hover": { bgcolor: "#FF3158", opacity: 0.8 },
+            "&:hover": { bgcolor: "#E85D5D" },
           }}
         >
           Enroll Now

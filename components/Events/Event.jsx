@@ -68,7 +68,7 @@ const Event = () => {
             sx={{
               fontSize: 16,
               fontWeight: 500,
-              color: "#ff3158",
+              color: "#0D9AAC",
               textAlign: "center",
               cursor: "pointer",
               mt: 2,

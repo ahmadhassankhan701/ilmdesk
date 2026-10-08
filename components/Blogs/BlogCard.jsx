@@ -68,7 +68,7 @@ const BlogCard = ({ image = "/heroCard2.png", title = "Blog" }) => {
           >
             Explore More
           </Typography>
-          <ArrowForwardOutlined sx={{ color: "#ff3158", fontSize: 20 }} />
+          <ArrowForwardOutlined sx={{ color: "#0D9AAC", fontSize: 20 }} />
         </Box>
       </Box>
     </Box>

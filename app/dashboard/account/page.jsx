@@ -1,7 +1,7 @@
 "use client";
 import { Backdrop, Box, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import SideBar from "@/components/SideBar";
+import PageTitle from "@/components/Dashboard/PageTitle";
 import AccountTable from "@/components/Tables/AccountTable";
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -20,8 +20,8 @@ const Account = () => {
         const q = query(docsRef, where("userId", "==", state.user.uid));
         const snapshot = await getDocs(q);
         if (snapshot.size === 0) {
+          setPayments([]);
           setLoading(false);
-          toast.error("No data found");
           return;
         }
         let items = [];
@@ -58,31 +58,17 @@ const Account = () => {
       </Backdrop>
       <Box width={"100%"}>
         <SideBar>
-          <Grid container spacing={1} mb={2}>
-            <Grid>
-              <Typography
-                sx={{
-                  fontSize: 28,
-                  fontWeight: "800",
-                  color: "#A6A6A6",
-                }}
-              >
-                Account
+          <PageTitle eyebrow="Billing" title="Payments" body="Receipts you uploaded, and whether the desk has approved them." />
+          {loading ? null : payments.length === 0 ? (
+            <Box sx={{ bgcolor: "#fff", borderRadius: "22px", p: 3 }}>
+              <Typography sx={{ fontWeight: 700, color: "#0A192F" }}>No payments yet.</Typography>
+              <Typography sx={{ color: "#5C6B7A", mt: 0.75 }}>
+                A receipt shows up here after you submit one at checkout.
               </Typography>
-              <Typography
-                sx={{
-                  fontSize: 16,
-                  fontWeight: "800",
-                  color: "#A0AAB4",
-                }}
-              >
-                Your Statistics
-              </Typography>
-            </Grid>
-          </Grid>
-          <Grid container spacing={1}>
+            </Box>
+          ) : (
             <AccountTable data={payments} />
-          </Grid>
+          )}
         </SideBar>
       </Box>
     </Box>

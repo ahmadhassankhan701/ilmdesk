@@ -1,151 +1,128 @@
 "use client";
-import { CalendarTodayOutlined } from "@mui/icons-material";
-import {
-  Box,
-  Button,
-  Container,
-  Divider,
-  TextField,
-  Typography,
-  styled,
-} from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import { useRouter } from "next/navigation";
-import React from "react";
-const FooterGridMainTitle = styled(Typography)({
-  fontWeight: "800",
-  fontSize: 20,
-  color: "#D9DDDE",
-  textTransform: "capitalize",
-  paddingBottom: 40,
-  lineHeight: 1.5,
-  textAlign: "left",
-});
-const FooterGridOptions = styled(Typography)({
-  fontWeight: 400,
-  fontSize: 16,
-  color: "#E6E8E9",
-  textTransform: "none",
-  paddingBottom: 5,
-  lineHeight: 1.5,
-  textAlign: "left",
-  cursor: "pointer",
-});
+
+import { Box, Typography } from "@mui/material";
+import { FacebookOutlined, WhatsApp, YouTube } from "@mui/icons-material";
+import Link from "next/link";
+import { pageBackground, pageColumnSx } from "@/lib/pageColumn";
+
+const columns = [
+  {
+    title: "Learn",
+    links: [
+      { label: "Classes", href: "/classes" },
+      { label: "Courses", href: "/courses" },
+      { label: "About", href: "/about" },
+    ],
+  },
+  {
+    title: "Account",
+    links: [
+      { label: "Log in", href: "/auth" },
+      { label: "Create an account", href: "/auth/register" },
+      { label: "Apply to teach", href: "/auth/register" },
+    ],
+  },
+  {
+    title: "Ilmdesk",
+    links: [
+      { label: "Contact", href: "/contact" },
+      { label: "Privacy", href: "/privacy" },
+    ],
+  },
+];
+
+const socials = [
+  { label: "WhatsApp", href: "https://whatsapp.com/channel/0029VaCUDxF5fM5an8mLcp34", icon: <WhatsApp sx={{ fontSize: 18 }} /> },
+  { label: "YouTube", href: "https://youtube.com/@qasimmahi?si=T1GWa_w274PUNZtt", icon: <YouTube sx={{ fontSize: 18 }} /> },
+  { label: "Facebook", href: "https://www.facebook.com/share/1Fw8GGhhYC/", icon: <FacebookOutlined sx={{ fontSize: 18 }} /> },
+];
+
 const Footer = () => {
-  const route = useRouter();
   return (
-    <Box
-      sx={{
-        background: `url("/footerBg.png")`,
-        backgroundColor: "#002935",
-        pt: 10,
-        pb: 3,
-        mt: 10,
-      }}
-    >
-      <Box display={"flex"} justifyContent={"center"} alignItems={"center"}>
-        <Box width={"80%"}>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-              <img
-                src="/ilmlogo.png"
-                alt="logo"
-                style={{ width: 150, marginTop: 20, marginBottom: 20 }}
-              />
-              <Box display={"flex"} alignItems={"center"} flexWrap={"nowrap"}>
-                <TextField
-                  variant="outlined"
-                  placeholder="Enter your email"
+    <Box component="footer" sx={{ bgcolor: pageBackground, pt: { xs: 4, md: 6 }, pb: { xs: 3, md: 4 } }}>
+      <Box sx={pageColumnSx}>
+        <Box
+          sx={{
+            bgcolor: "#0A192F",
+            color: "#fff",
+            borderRadius: { xs: "24px", md: "28px" },
+            px: { xs: 3, md: 5 },
+            py: { xs: 4, md: 5 },
+          }}
+        >
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1.4fr 1fr 1fr 1fr" },
+            gap: { xs: 4, md: 3 },
+          }}
+        >
+          <Box>
+            <img src="/ilmlogo.png" alt="Ilmdesk" style={{ height: 42, width: "auto" }} />
+            <Typography sx={{ color: "rgba(255,255,255,0.68)", mt: 2, maxWidth: 280, lineHeight: 1.6, fontSize: 15 }}>
+              Classes, courses, and quizzes from the teachers you study with.
+            </Typography>
+            <Box display="flex" gap={1} mt={2.5}>
+              {socials.map((item) => (
+                <Box
+                  key={item.label}
+                  component="a"
+                  href={item.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={item.label}
                   sx={{
-                    borderTopLeftRadius: 5,
-                    borderBottomLeftRadius: 5,
-                    borderTopRightRadius: 0,
-                    borderBottomRightRadius: 0,
-                    backgroundColor: "#fff",
-                    width: 300,
-                  }}
-                  InputProps={{
-                    style: {
-                      backgroundColor: "#fff",
-                    },
-                  }}
-                />
-                <Button
-                  variant="contained"
-                  color="primary"
-                  sx={{
-                    borderRadius: 0,
-                    width: 120,
-                    height: 57,
-                    borderTopLeftRadius: 0,
-                    borderBottomLeftRadius: 0,
-                    borderTopRightRadius: 5,
-                    borderBottomRightRadius: 5,
-                    backgroundColor: "#ff3158",
-                    textTransform: "none",
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    border: "1px solid rgba(255,255,255,0.16)",
+                    color: "#fff",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    "&:hover": { color: "#0D9AAC", borderColor: "#0D9AAC" },
                   }}
                 >
-                  Subscribe
-                </Button>
-              </Box>
-            </Grid>
-            <Grid
-              size={{ xs: 12, sm: 6, md: 3 }}
-              display={"flex"}
-              justifyContent={"center"}
-              alignItems={"flex-start"}
-              flexDirection={"column"}
-            >
-              <FooterGridMainTitle>Useful Links</FooterGridMainTitle>
-              <FooterGridOptions onClick={() => route.push("/about")}>
-                About Us
-              </FooterGridOptions>
-              <a href="/#instructors" style={{ textDecoration: "none" }}>
-                <FooterGridOptions>Instructor</FooterGridOptions>
-              </a>
-              <FooterGridOptions onClick={() => alert("coming soon")}>
-                Become a Teacher
-              </FooterGridOptions>
-              <FooterGridOptions onClick={() => route.push("/classes")}>
-                Classes
-              </FooterGridOptions>
-              <FooterGridOptions onClick={() => route.push("/courses")}>
-                All Courses
-              </FooterGridOptions>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <FooterGridMainTitle>Courses</FooterGridMainTitle>
-              <a href="/#blogs" style={{ textDecoration: "none" }}>
-                <FooterGridOptions>News & Blogs</FooterGridOptions>
-              </a>
-              <FooterGridOptions onClick={() => route.push("/contact")}>
-                Contacts
-              </FooterGridOptions>
-              <FooterGridOptions onClick={() => route.push("/courses")}>
-                Pricing
-              </FooterGridOptions>
-              <FooterGridOptions onClick={() => route.push("/privacy")}>
-                Terms & Conditions
-              </FooterGridOptions>
-            </Grid>
-          </Grid>
-          <Divider sx={{ backgroundColor: "#4A5355", my: 5 }} />
-          <Box display={"flex"} justifyContent={"center"} alignItems={"center"}>
-            <Typography
-              sx={{
-                fontWeight: "400",
-                fontSize: 16,
-                lineHeight: 1.5,
-                paddingBottom: 1,
-                color: "#E6E8E9",
-                maxWidth: 650,
-                textAlign: "center",
-              }}
-            >
-              © {new Date().getFullYear()} Ilmdesk Learning Management System,
-              All rights reserved.
-            </Typography>
+                  {item.icon}
+                </Box>
+              ))}
+            </Box>
           </Box>
+          {columns.map((column) => (
+            <Box key={column.title}>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "#0D9AAC", mb: 1.75 }}>
+                {column.title}
+              </Typography>
+              <Box display="flex" flexDirection="column" gap={1.1}>
+                {column.links.map((link) => (
+                  <Link key={link.label} href={link.href} style={{ textDecoration: "none" }}>
+                    <Typography sx={{ color: "rgba(255,255,255,0.78)", fontSize: 15, "&:hover": { color: "#fff" } }}>
+                      {link.label}
+                    </Typography>
+                  </Link>
+                ))}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+        <Box
+          sx={{
+            mt: 4,
+            pt: 2.5,
+            borderTop: "1px solid rgba(255,255,255,0.1)",
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 2,
+            flexWrap: "wrap",
+          }}
+        >
+          <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: 13 }}>
+            © {new Date().getFullYear()} Ilmdesk
+          </Typography>
+          <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: 13 }}>
+            Online learning, in one place
+          </Typography>
+        </Box>
         </Box>
       </Box>
     </Box>

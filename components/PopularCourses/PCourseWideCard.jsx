@@ -60,10 +60,10 @@ const PCourseWideCard = ({
             variant="contained"
             size="small"
             sx={{
-              bgcolor: "#FF3158",
+              bgcolor: "#0D9AAC",
               textTransform: "none",
               "&:hover": {
-                bgcolor: "#FF3158",
+                bgcolor: "#0D9AAC",
               },
             }}
           >

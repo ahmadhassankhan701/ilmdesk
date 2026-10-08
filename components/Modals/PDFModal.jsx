@@ -1,67 +1,75 @@
 "use client";
-import { Box, Modal, IconButton } from "@mui/material";
-import { Close } from "@mui/icons-material";
-const style = {
-  width: "100%",
-  height: "100%",
-  bgcolor: "lightgray",
-  border: "none",
-  boxShadow: "rgba(0, 0, 0, 0.24) 0px 3px 8px",
-};
 
-export default function PDFModal({ open, setOpen, url }) {
-  const handleClose = () => {
-    setOpen(false);
-  };
+import { Box, Dialog, IconButton, Typography, useMediaQuery } from "@mui/material";
+import { Close, OpenInNew } from "@mui/icons-material";
+import { primary } from "@/lib/brand";
+
+export default function PDFModal({ open, setOpen, url, name = "PDF" }) {
+  const fullScreen = useMediaQuery("(max-width:600px)");
+  const close = () => setOpen(false);
+
   return (
-    <div>
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-        sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+    <Dialog
+      open={open}
+      onClose={close}
+      fullScreen={fullScreen}
+      fullWidth
+      maxWidth="lg"
+      aria-labelledby="pdf-reader-title"
+      PaperProps={{
+        sx: {
+          height: fullScreen ? "100%" : "min(88vh, 920px)",
+          borderRadius: fullScreen ? 0 : "20px",
+          overflow: "hidden",
+          bgcolor: "#F0F3F5",
+          display: "flex",
+          flexDirection: "column",
+        },
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          px: { xs: 1.5, sm: 2 },
+          py: 1,
+          bgcolor: "#0A192F",
+          color: "#fff",
+        }}
       >
-        <Box sx={style}>
-          <Box
-            height={"100vh"}
-            display={"flex"}
-            flexDirection={"column"}
-            justifyContent={"center"}
-            alignItems={"center"}
-          >
-            <Box
-              display={"flex"}
-              justifyContent={"flex-end"}
-              alignItems={"flex-end"}
-              width={"100%"}
-              bgcolor={"rgb(60, 60, 60)"}
-            >
-              <IconButton
-                onClick={handleClose}
-                size="small"
-                sx={{
-                  zIndex: 2,
-                  color: "red",
-                  my: 1,
-                  bgcolor: "gray",
-                }}
-                color="gray"
-              >
-                <Close sx={{ color: "#fff", fontSize: 13 }} />
-              </IconButton>
-            </Box>
-            {url && (
-              <iframe
-                src={url + "#toolbar=0"}
-                height={"100%"}
-                width={"100%"}
-                frameborder="0"
-              ></iframe>
-            )}
-          </Box>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography id="pdf-reader-title" noWrap sx={{ fontWeight: 700, fontSize: 15 }}>
+            {name}
+          </Typography>
+          <Typography sx={{ color: "rgba(255,255,255,0.62)", fontSize: 12 }}>PDF</Typography>
         </Box>
-      </Modal>
-    </div>
+        {url ? (
+          <IconButton
+            component="a"
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Open in a new tab"
+            sx={{ color: "#fff", "&:hover": { color: primary } }}
+          >
+            <OpenInNew sx={{ fontSize: 20 }} />
+          </IconButton>
+        ) : null}
+        <IconButton aria-label="Close reader" onClick={close} sx={{ color: "#fff", "&:hover": { color: primary } }}>
+          <Close />
+        </IconButton>
+      </Box>
+      <Box sx={{ flex: 1, minHeight: 0, bgcolor: "#E2E8EC" }}>
+        {open && url ? (
+          <Box
+            component="iframe"
+            title={name}
+            src={url}
+            sx={{ width: "100%", height: "100%", border: 0, display: "block", bgcolor: "#fff" }}
+          />
+        ) : null}
+      </Box>
+    </Dialog>
   );
 }

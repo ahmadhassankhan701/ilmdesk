@@ -520,11 +520,11 @@ const page = ({ params }) => {
                       variant="contained"
                       sx={{
                         color: "#fff",
-                        bgcolor: "rgb(255, 49, 88)",
+                        bgcolor: "#FF6B6B",
                         alignSelf: "center",
                         my: 2,
                         "&:hover": {
-                          bgcolor: "rgb(255, 49, 88)",
+                          bgcolor: "#FF6B6B",
                         },
                       }}
                       onClick={handleStart}

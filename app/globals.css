@@ -1,3 +1,28 @@
+.Toastify__toast {
+	background: #0A192F !important;
+	color: #fff !important;
+	border-radius: 16px !important;
+	border-left: 4px solid #0D9AAC !important;
+	font-family: Poppins, sans-serif;
+	box-shadow: 0 18px 40px rgba(17, 17, 19, 0.22);
+	padding: 14px 16px;
+}
+.Toastify__toast-body {
+	font-size: 14px;
+	line-height: 1.45;
+	padding: 0;
+}
+.Toastify__close-button {
+	color: #fff;
+	opacity: 0.7;
+}
+.Toastify__progress-bar {
+	background: #0D9AAC !important;
+}
+.Toastify__toast-icon svg {
+	fill: #0D9AAC;
+}
+
 .slick_slider {
 	background-color: transparent;
 	box-shadow: none;

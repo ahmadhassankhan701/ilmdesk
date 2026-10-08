@@ -72,7 +72,7 @@ const Instructor = () => {
             }}
           >
             Our Expert
-            <span style={{ color: "#ff3158", marginLeft: 10 }}>
+            <span style={{ color: "#0D9AAC", marginLeft: 10 }}>
               Instructors
             </span>
           </Typography>

@@ -63,7 +63,7 @@ const CourseCateg = () => {
         }}
       >
         Our Courses
-        <span style={{ color: "#ff3158", marginLeft: 10 }}>Categories</span>
+        <span style={{ color: "#0D9AAC", marginLeft: 10 }}>Categories</span>
       </Typography>
       <Typography
         sx={{

@@ -1,0 +1,76 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isBrandAdmin() {
+      return signedIn() && (
+        (
+          request.auth.token.email != null
+          && request.auth.token.email.lower() == 'qasim@ilmdesk.com'
+        )
+        || (
+          firestore.exists(/databases/(default)/documents/Users/$(request.auth.uid))
+          && firestore.get(/databases/(default)/documents/Users/$(request.auth.uid)).data.role == 'owner'
+        )
+      );
+    }
+
+    match /Profiles/{userId}/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /Payments/{courseId}/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 2 * 1024 * 1024;
+    }
+
+    match /ClassImages/{ownerId}/{fileName} {
+      allow read: if true;
+      allow create, update: if isBrandAdmin()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if isBrandAdmin();
+    }
+
+    match /CourseImages/{ownerId}/{fileName} {
+      allow read: if true;
+      allow create, update: if isBrandAdmin()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if isBrandAdmin();
+    }
+
+    match /CoursesImages/{fileName} {
+      allow read: if true;
+      allow create, update: if isBrandAdmin()
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if isBrandAdmin();
+    }
+
+    match /ClassPDFFiles/{ownerId}/{fileName} {
+      allow read: if true;
+      allow create, update: if isBrandAdmin()
+        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType == 'application/pdf';
+      allow delete: if isBrandAdmin();
+    }
+
+    match /CoursePDFFiles/{ownerId}/{fileName} {
+      allow read: if true;
+      allow create, update: if isBrandAdmin()
+        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType == 'application/pdf';
+      allow delete: if isBrandAdmin();
+    }
+  }
+}

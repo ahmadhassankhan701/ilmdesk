@@ -48,8 +48,8 @@ const QuizList = ({ quizzes, type }) => {
           item.locked ? (
             <IconButton
               sx={{
-                bgcolor: "gray",
-                "&:hover": { bgcolor: "gray" },
+                bgcolor: "#0A192F",
+                "&:hover": { bgcolor: "#0A192F" },
               }}
               edge="end"
             >
@@ -70,9 +70,9 @@ const QuizList = ({ quizzes, type }) => {
             >
               <IconButton
                 sx={{
-                  bgcolor: "green",
+                  bgcolor: "#0D9AAC",
                   color: "white",
-                  "&:hover": { bgcolor: "green" },
+                  "&:hover": { bgcolor: "#0A8494" },
                 }}
                 edge="end"
                 aria-label="delete"
@@ -87,9 +87,8 @@ const QuizList = ({ quizzes, type }) => {
         <ListItemAvatar>
           <Avatar
             sx={{
-              bgcolor: "purple",
+              bgcolor: "#0D9AAC",
               color: "white",
-              "&:hover": { bgcolor: "green" },
             }}
           >
             <Quiz sx={{ color: "white" }} />

@@ -9,9 +9,15 @@ import "react-toastify/dist/ReactToastify.css";
 import "../styles/globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { usePathname } from "next/navigation";
+import { canvas, navy, primary } from "@/lib/brand";
 const poppins = Poppins({ weight: ["400", "700"], subsets: ["latin"] });
 
 const theme = createTheme({
+  palette: {
+    primary: { main: primary, contrastText: "#fff" },
+    text: { primary: navy },
+    background: { default: canvas },
+  },
   typography: {
     fontFamily: "Poppins, sans-serif",
   },
@@ -23,19 +29,18 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body
         className={poppins.className}
-        style={{ backgroundColor: "#F5F5F5" }}
+        style={{ backgroundColor: canvas }}
       >
         <AuthProvider>
           <ThemeProvider theme={theme}>
             <ToastContainer
               position="top-center"
-              autoClose={2000}
+              autoClose={4200}
               hideProgressBar={false}
-              newestOnTop={false}
+              newestOnTop
               closeOnClick
-              rtl={false}
               pauseOnFocusLoss
-              draggable
+              draggable={false}
               pauseOnHover
               theme="dark"
             />

@@ -1,218 +1,235 @@
 "use client";
-import { db } from "@/firebase";
-import { ExpandMore, Topic } from "@mui/icons-material";
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Skeleton,
-  Typography,
-} from "@mui/material";
-import { collection, getDocs, query, where } from "firebase/firestore";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useState, Suspense, useCallback } from "react";
-import { Backdrop } from "@mui/material";
+import { Box, Skeleton, Typography } from "@mui/material";
+import { usePathname, useRouter } from "next/navigation";
+import { ink, muted, primary, primaryHover } from "@/lib/brand";
+import { pageBackground, pageColumnSx } from "@/lib/pageColumn";
+import PageTrail from "@/components/PageTrail";
+import LegacyClassRedirect from "@/components/Classes/LegacyClassRedirect";
+import { resolveModulePath } from "@/lib/classCatalog";
+import { chapterAnchor, classAnchor, lessonPath, modulePath, subjectPath } from "@/lib/classPath";
 
-const ChaptersPage = () => {
-  const route = useRouter();
-  const searchParam = useSearchParams();
-  const branchId = searchParam.get("id");
-  const [chapters, setChapters] = useState([]);
-  const [loading, setLoading] = useState(false);
+function timeOf(value) {
+  return value?.toMillis?.() || value?.getTime?.() || Number(value) || 0;
+}
 
-  const fetchChapters = useCallback(async () => {
-    if (!branchId) {
-      route.back();
-      return;
-    }
+function byCreated(items) {
+  return [...items].sort((a, b) => timeOf(a.createdAt) - timeOf(b.createdAt) || String(a.name || "").localeCompare(String(b.name || "")));
+}
 
-    setLoading(true);
-    try {
-      const chaptersRef = collection(db, "chapters");
-      const topicsRef = collection(db, "topics");
-
-      const chaptersQuery = query(
-        chaptersRef,
-        where("branchID", "==", branchId)
-      );
-
-      const [chaptersSnapshot, topicsSnapshot] = await Promise.all([
-        getDocs(chaptersQuery),
-        getDocs(topicsRef),
-      ]);
-
-      // Convert snapshots to arrays
-      const chaptersArray = chaptersSnapshot.docs.map((doc) => ({
-        key: doc.id,
-        ...doc.data(),
-      }));
-
-      const topicsArray = topicsSnapshot.docs.map((doc) => ({
-        key: doc.id,
-        ...doc.data(),
-      }));
-
-      // Sort both arrays by createdAt
-      chaptersArray.sort((a, b) => a.createdAt - b.createdAt);
-
-      // Structure the data
-      const structuredData = chaptersArray.map((chapter) => ({
-        chapterId: chapter.key,
-        chapterName: chapter.name,
-        topics: topicsArray
-          .filter((topic) => topic.chapterID === chapter.key)
-          .sort((a, b) => a.createdAt - b.createdAt),
-      }));
-
-      setChapters(structuredData);
-    } catch (error) {
-      console.error("Error fetching chapters and topics:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [branchId, route]);
+export function ModuleChaptersPage({ classSlug, subjectSlug, moduleSlug }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [catalog, setCatalog] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    fetchChapters();
-  }, [fetchChapters]);
+    let active = true;
+
+    (async () => {
+      if (!classSlug || !subjectSlug || !moduleSlug) {
+        if (active) {
+          setCatalog(null);
+          setFailed(false);
+          setLoading(false);
+        }
+        return;
+      }
+
+      setLoading(true);
+      setFailed(false);
+      try {
+        const found = await resolveModulePath(classSlug, subjectSlug, moduleSlug);
+        if (!active) return;
+        if (!found) {
+          setCatalog(null);
+          return;
+        }
+        const canonical = modulePath(found.classItem, found.classes, found.subject, found.subjects, found.module, found.modules);
+        if (decodeURI(pathname) !== canonical) router.replace(canonical);
+        const chapters = byCreated(found.chapters);
+        const topics = found.topics;
+        setCatalog({
+          ...found,
+          chapters: chapters.map((chapter) => ({
+            ...chapter,
+            chapterId: chapter.id,
+            chapterName: chapter.name || "Chapter",
+            anchor: chapterAnchor(chapter, chapters),
+            topics: byCreated(topics.filter((topic) => topic.chapterID === chapter.id)),
+          })),
+        });
+      } catch (error) {
+        console.error("Error fetching chapters and topics:", error);
+        if (active) {
+          setCatalog(null);
+          setFailed(true);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [classSlug, subjectSlug, moduleSlug, pathname, router]);
+
+  const place = catalog
+    ? {
+        moduleName: catalog.module.name || "Module",
+        subjectName: catalog.subject.name || "Subject",
+      }
+    : null;
+  const chapters = catalog?.chapters || [];
+  const trail = catalog
+    ? [
+        { label: "Classes", href: "/classes" },
+        { label: catalog.classItem.name || "Class", href: `/classes#${classAnchor(catalog.classItem, catalog.classes)}` },
+        { label: catalog.subject.name || "Subject", href: subjectPath(catalog.classItem, catalog.classes, catalog.subject, catalog.subjects) },
+        { label: catalog.module.name || "Module" },
+      ]
+    : [
+        { label: "Classes", href: "/classes" },
+        { label: "Module" },
+      ];
 
   return (
-    <Box>
-      {loading ? (
-        // Show Skeleton while loading
-        <Box display={"flex"} justifyContent={"center"}>
-          <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
-            <Grid container spacing={2}>
-              {[...Array(3)].map((_, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Card key={index} sx={{ mb: 2 }}>
-                    <CardContent>
-                      <Skeleton
-                        variant="rectangular"
-                        width={"100%"}
-                        height={118}
-                      />
-                      <Skeleton variant="text" width={"80%"} height={30} />
-                      <Skeleton variant="text" width={"80%"} height={30} />
-                      <Skeleton variant="text" width={"50%"} height={30} />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        </Box>
-      ) : chapters.length === 0 ? (
+    <Box sx={{ bgcolor: pageBackground, color: ink, pt: { xs: "96px", md: "112px" }, pb: { xs: 8, md: 12 } }}>
+      <Box sx={pageColumnSx}>
         <Box
-          width={"100%"}
-          display={"flex"}
-          justifyContent={"center"}
-          alignItems={"center"}
-          mt={15}
+          sx={{
+            borderRadius: { xs: "24px", md: "32px" },
+            background: "linear-gradient(145deg, #0A192F 0%, #071322 55%, #123044 100%)",
+            px: { xs: 3, sm: 4.5, md: 6 },
+            py: { xs: 5, md: 7 },
+          }}
         >
-          <Box sx={{ width: 400 }}>
-            <img src="/no_item.png" width={"100%"} height={"auto"} />
+          <Typography
+            component="p"
+            sx={{
+              color: "#fff",
+              border: "1px solid rgba(255,255,255,0.16)",
+              borderRadius: 999,
+              px: 1.5,
+              py: 0.4,
+              fontSize: 12,
+              letterSpacing: 0.6,
+              mb: 2.5,
+              width: "fit-content",
+            }}
+          >
+            Chapters
+          </Typography>
+          <Typography
+            component="h1"
+            sx={{
+              color: "#fff",
+              fontWeight: 700,
+              letterSpacing: -1.4,
+              lineHeight: 1.05,
+              fontSize: { xs: 40, sm: 52, md: 64 },
+              maxWidth: 720,
+            }}
+          >
+            {place?.moduleName || "Choose a module"}
+          </Typography>
+          <Typography sx={{ color: "rgba(255,255,255,0.72)", fontSize: 17, lineHeight: 1.65, maxWidth: 520, mt: 2.5 }}>
+            {place
+              ? `Chapters inside ${place.subjectName}. Open a topic to study.`
+              : "Pick a module from the subject to see its chapters."}
+          </Typography>
+          <PageTrail onDark items={loading ? [{ label: "Classes", href: "/classes" }, { label: "Module" }] : trail} />
+        </Box>
+
+        {loading ? (
+          <Box sx={{ mt: 3, display: "grid", gap: 1.5 }}>
+            {[0, 1, 2].map((tile) => (
+              <Skeleton key={tile} variant="rounded" height={148} sx={{ borderRadius: "22px", bgcolor: "rgba(10, 25, 47, 0.08)" }} />
+            ))}
+          </Box>
+        ) : failed ? (
+          <Box sx={{ mt: 3, bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "24px", p: { xs: 3, md: 4 } }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 22 }}>Chapters could not be loaded</Typography>
+            <Typography sx={{ color: muted, mt: 1 }}>Refresh the page and try again.</Typography>
+          </Box>
+        ) : !place ? (
+          <Box sx={{ mt: 3, bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "24px", p: { xs: 3, md: 4 } }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 22 }}>This module is not on the syllabus</Typography>
             <Typography
-              textAlign={"center"}
-              fontSize={16}
-              my={2}
-              fontWeight={"bold"}
+              component={Link}
+              href="/classes"
+              sx={{ display: "inline-block", color: primary, fontWeight: 600, mt: 1.5, textDecoration: "none", "&:hover": { color: primaryHover } }}
             >
-              No chapters available yet
+              Back to classes
             </Typography>
           </Box>
-        </Box>
-      ) : (
-        <Box display={"flex"} justifyContent={"center"}>
-          <Box sx={{ mx: { xs: 0, sm: 10 } }} mt={15} width={"80%"}>
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 800,
-                color: "gray",
-                mt: 1,
-              }}
-            >
-              {chapters.length} chapters
-            </Typography>
-            <Box mt={5}>
-              {chapters.map((item) => (
-                <Accordion key={item.chapterId}>
-                  <AccordionSummary
-                    expandIcon={<ExpandMore />}
-                    aria-controls="panel2-content"
-                    id="panel2-header"
-                  >
-                    {item.chapterName}
-                  </AccordionSummary>
-                  {item.topics.length === 0 ? (
-                    <AccordionDetails>
-                      <Typography fontSize={15} color={"gray"}>
-                        No topic here
-                      </Typography>
-                    </AccordionDetails>
-                  ) : (
-                    <AccordionDetails>
-                      <List>
-                        {item.topics.map((topic) => (
-                          <Link
-                            key={topic.key}
-                            href={{
-                              pathname: "/classes/details",
-                              query: {
-                                id: topic.key,
-                                chapterId: item.chapterId,
-                              },
-                            }}
-                            style={{
-                              textDecoration: "none",
-                              color: "inherit",
-                            }}
-                          >
-                            <ListItem disablePadding>
-                              <ListItemButton>
-                                <ListItemIcon>
-                                  <Topic />
-                                </ListItemIcon>
-                                <ListItemText primary={topic.name} />
-                              </ListItemButton>
-                            </ListItem>
-                          </Link>
-                        ))}
-                      </List>
-                    </AccordionDetails>
-                  )}
-                </Accordion>
-              ))}
-            </Box>
+        ) : chapters.length === 0 ? (
+          <Box sx={{ mt: 3, bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "24px", p: { xs: 3, md: 4 } }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 22 }}>No chapters yet</Typography>
+            <Typography sx={{ color: muted, mt: 1 }}>Topics will show here once a chapter is published.</Typography>
           </Box>
-        </Box>
-      )}
+        ) : (
+          <Box sx={{ mt: { xs: 3, md: 4 }, display: "grid", gap: 1.5 }}>
+            {chapters.map((chapter) => (
+              <Box id={chapter.anchor} key={chapter.chapterId} sx={{ bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "22px", overflow: "hidden", scrollMarginTop: { xs: "96px", md: "120px" } }}>
+                <Box sx={{ p: { xs: 2.5, md: 3 } }}>
+                  <Typography sx={{ color: primary, fontSize: 13, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase" }}>
+                    Chapter
+                  </Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: { xs: 22, md: 26 }, letterSpacing: -0.4, mt: 0.75, lineHeight: 1.2 }}>
+                    {chapter.chapterName}
+                  </Typography>
+                </Box>
+                {chapter.topics.length === 0 ? (
+                  <Typography sx={{ color: muted, px: { xs: 2.5, md: 3 }, pb: 3 }}>No topics yet</Typography>
+                ) : (
+                  chapter.topics.map((topic) => (
+                    <Box
+                      key={topic.id}
+                      component={Link}
+                      href={lessonPath({
+                        classItem: catalog.classItem,
+                        classes: catalog.classes,
+                        subject: catalog.subject,
+                        subjects: catalog.subjects,
+                        module: catalog.module,
+                        modules: catalog.modules,
+                        chapter,
+                        chapters: catalog.chapters,
+                        topic,
+                        topics: chapter.topics,
+                      })}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 2,
+                        px: { xs: 2.5, md: 3 },
+                        py: 1.75,
+                        borderTop: "1px solid #E2E8EC",
+                        textDecoration: "none",
+                        color: ink,
+                        "&:hover": { bgcolor: "rgba(13, 154, 172, 0.06)" },
+                      }}
+                    >
+                      <Typography sx={{ fontWeight: 600, fontSize: 16 }}>{topic.name}</Typography>
+                      <Typography sx={{ color: primary, fontWeight: 600, fontSize: 14, flexShrink: 0 }}>Open</Typography>
+                    </Box>
+                  ))
+                )}
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Box>
     </Box>
   );
-};
-const PageWrapper = () => (
-  <Suspense
-    fallback={
-      <Backdrop
-        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={true}
-      >
-        <img src={"/loader.gif"} width={100} height={100} />
-      </Backdrop>
-    }
-  >
-    <ChaptersPage />
-  </Suspense>
-);
-export default PageWrapper;
+}
+
+export default function Page() {
+  return <LegacyClassRedirect kind="module" />;
+}
