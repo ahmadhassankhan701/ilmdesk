@@ -8,6 +8,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import PageTitle from "@/components/Dashboard/PageTitle";
 import LessonComposer from "@/components/Dashboard/LessonComposer";
+import RichTextField from "@/components/Dashboard/RichTextField";
 import { fieldSx, ink, muted, pillButton, primary, primaryHover } from "@/components/AuthFrame";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/firebase";
@@ -15,7 +16,9 @@ import {
   addClassItem,
   addCourseModule,
   deleteClassItem,
+  deleteClassTree,
   deleteCourseModule,
+  deleteCourseTree,
   listClassItems,
   renameClassItem,
   renameCourseModule,
@@ -23,7 +26,10 @@ import {
   uploadCurriculumFile,
 } from "@/lib/curriculum";
 import { CLASS_LEVELS, DIFFICULTIES } from "@/lib/curriculumFormat";
+import { prepareImage, UploadPrepError } from "@/lib/prepareUpload";
 import { ROLES } from "@/lib/roles";
+import { accent } from "@/lib/brand";
+import ConfirmDeleteDialog from "@/components/Dashboard/ConfirmDeleteDialog";
 
 const CLASS_STEPS = ["Class", "Subject", "Module", "Chapter", "Topic", "Lesson"];
 const COURSE_STEPS = ["Course", "Modules", "Lesson"];
@@ -38,7 +44,17 @@ function panel(accent = pine) {
   };
 }
 
-function BackLink({ onClick }) {
+const deleteButtonSx = {
+  ...pillButton,
+  width: "auto",
+  py: 0.7,
+  bgcolor: "transparent",
+  color: accent,
+  border: `1px solid ${accent}`,
+  "&:hover": { bgcolor: "rgba(255, 107, 107, 0.08)", boxShadow: "none" },
+};
+
+function BackLink({ onClick, flush = false }) {
   return (
     <Box
       component="button"
@@ -48,7 +64,7 @@ function BackLink({ onClick }) {
         display: "inline-flex",
         alignItems: "center",
         gap: 0.75,
-        mb: 2,
+        mb: flush ? 0 : 2,
         p: 0,
         border: 0,
         bgcolor: "transparent",
@@ -115,8 +131,11 @@ export function ClassStudio({ classId }) {
   const [cursor, setCursor] = useState(isNew ? 0 : 1);
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState("");
+  const [className, setClassName] = useState("");
   const [rename, setRename] = useState({ id: "", name: "" });
   const [loading, setLoading] = useState(!isNew);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!allowed || isNew) return undefined;
@@ -130,7 +149,9 @@ export function ClassStudio({ classId }) {
           router.replace("/dashboard/curriculum");
           return;
         }
-        setPath([{ id: snap.id, name: snap.data().name || "Class" }]);
+        const name = snap.data().name || "Class";
+        setPath([{ id: snap.id, name }]);
+        setClassName(name);
         setCursor(1);
       } catch (error) {
         console.error(error);
@@ -175,6 +196,35 @@ export function ClassStudio({ classId }) {
     }
   };
 
+  const saveClassName = async (event) => {
+    event.preventDefault();
+    if (!path[0]?.id) return;
+    try {
+      const name = className.trim();
+      await renameClassItem(0, path[0].id, name);
+      setClassName(name);
+      setPath((current) => current.map((node, index) => (index === 0 ? { ...node, name } : node)));
+      toast.success("Class name saved.");
+    } catch (error) {
+      console.error(error);
+      toast.error(error.message || "Could not rename this class.");
+    }
+  };
+
+  const removeClass = async () => {
+    if (!path[0]?.id) return;
+    try {
+      setDeleting(true);
+      await deleteClassTree(path[0].id);
+      toast.success("Class deleted.");
+      router.replace("/dashboard/curriculum");
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not delete this class.");
+      setDeleting(false);
+    }
+  };
+
   const addCurrent = async (event) => {
     event.preventDefault();
     try {
@@ -208,7 +258,23 @@ export function ClassStudio({ classId }) {
   return (
     <Box sx={{ pb: { xs: 4, md: 6 } }}>
       <PageTitle eyebrow="Curriculum" title={isNew ? "New class" : path[0]?.name || "Class"} body="Name the class, then add the subject, module, chapter, topic, and lesson. You can move back to an earlier step and forward again." />
-      <BackLink onClick={() => router.push("/dashboard/curriculum")} />
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
+        <BackLink flush onClick={() => router.push("/dashboard/curriculum")} />
+        {!isNew && path[0] && (
+          <Button type="button" onClick={() => setConfirmDelete(true)} sx={deleteButtonSx}>
+            Delete class
+          </Button>
+        )}
+      </Box>
+      <ConfirmDeleteDialog
+        open={confirmDelete}
+        title="Delete this class?"
+        body={`This removes ${path[0]?.name || "this class"} and everything inside it: subjects, modules, chapters, topics, lessons, quizzes, and files. This cannot be undone.`}
+        confirmLabel="Delete class"
+        busy={deleting}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={removeClass}
+      />
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "280px 1fr" }, gap: 2, alignItems: "start" }}>
         <Box sx={panel()}>
           <Typography sx={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase", color: pine, mb: 1.5 }}>Steps</Typography>
@@ -242,9 +308,11 @@ export function ClassStudio({ classId }) {
         ) : loading || path.length === 0 ? (
           <Typography sx={{ color: muted }}>Loading…</Typography>
         ) : cursor === 0 ? (
-          <Box sx={panel()}>
-            <Typography sx={{ fontWeight: 700, color: ink, fontSize: 22 }}>{path[0].name}</Typography>
-            <Typography sx={{ color: muted, fontSize: 14, mt: 0.4 }}>This class is saved. Continue to its subjects, or go back to the full list.</Typography>
+          <Box component="form" onSubmit={saveClassName} sx={panel()}>
+            <Typography sx={{ fontWeight: 700, color: ink, fontSize: 22, mb: 0.5 }}>Class name</Typography>
+            <Typography sx={{ color: muted, fontSize: 14, mb: 2 }}>This is the name in the curriculum list and on the site.</Typography>
+            <TextField size="small" fullWidth placeholder="Class name" value={className} onChange={(event) => setClassName(event.target.value)} sx={{ ...fieldSx, mb: 2 }} />
+            <Button type="submit" sx={{ ...pillButton, width: "auto", bgcolor: primary, color: "#fff", "&:hover": { bgcolor: primaryHover, boxShadow: "none" } }}>Save name</Button>
             <StepMove canBack={false} canNext onBack={() => {}} onNext={() => setCursor(1)} />
           </Box>
         ) : onLesson ? (
@@ -317,6 +385,8 @@ export function CourseStudio({ courseId }) {
   const [draft, setDraft] = useState("");
   const [rename, setRename] = useState({ id: "", name: "" });
   const [loading, setLoading] = useState(!isNew);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!allowed || isNew) return undefined;
@@ -354,6 +424,20 @@ export function CourseStudio({ courseId }) {
     };
   }, [allowed, courseId, isNew, router]);
 
+  const removeCourse = async () => {
+    if (!course?.id) return;
+    try {
+      setDeleting(true);
+      await deleteCourseTree(course.id);
+      toast.success("Course deleted.");
+      router.replace("/dashboard/curriculum");
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not delete this course.");
+      setDeleting(false);
+    }
+  };
+
   const createCourse = async (event) => {
     event.preventDefault();
     try {
@@ -378,7 +462,23 @@ export function CourseStudio({ courseId }) {
   return (
     <Box sx={{ pb: { xs: 4, md: 6 } }}>
       <PageTitle eyebrow="Curriculum" title={isNew ? "New course" : details.title || "Course"} body="Name the course, add its modules, then publish each module as a lesson. You can move back and forward between these steps." />
-      <BackLink onClick={() => router.push("/dashboard/curriculum")} />
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
+        <BackLink flush onClick={() => router.push("/dashboard/curriculum")} />
+        {!isNew && course && (
+          <Button type="button" onClick={() => setConfirmDelete(true)} sx={deleteButtonSx}>
+            Delete course
+          </Button>
+        )}
+      </Box>
+      <ConfirmDeleteDialog
+        open={confirmDelete}
+        title="Delete this course?"
+        body={`This removes ${details.title || "this course"}, its modules, lessons, and files. Enrolled students lose access. This cannot be undone.`}
+        confirmLabel="Delete course"
+        busy={deleting}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={removeCourse}
+      />
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "280px 1fr" }, gap: 2, alignItems: "start" }}>
         <Box sx={panel()}>
           <Typography sx={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase", color: pine, mb: 1.5 }}>Steps</Typography>
@@ -537,20 +637,13 @@ function CourseDetails({ details, setDetails, onSave }) {
   const addCover = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = "";
-    if (!file?.type?.startsWith("image/")) {
-      toast.error("Choose an image file.");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Use an image under 2MB.");
-      return;
-    }
     try {
-      const stored = await uploadCurriculumFile("CoursesImages", "", file);
+      const prepared = await prepareImage(file, "cover");
+      const stored = await uploadCurriculumFile("CoursesImages", "", prepared);
       set({ image: stored.fileUrl });
     } catch (error) {
       console.error(error);
-      toast.error("Could not upload that image.");
+      toast.error(error instanceof UploadPrepError ? error.message : "Could not upload that image.");
     }
   };
   return (
@@ -566,7 +659,10 @@ function CourseDetails({ details, setDetails, onSave }) {
           ))}
         </TextField>
       </Box>
-      <TextField size="small" fullWidth multiline minRows={3} label="Description" value={details.desc} onChange={(event) => set({ desc: event.target.value })} sx={{ ...fieldSx, mb: 1.5 }} />
+      <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75 }}>Description</Typography>
+      <Box sx={{ mb: 1.5 }}>
+        <RichTextField value={details.desc} onChange={(desc) => set({ desc })} placeholder="Describe the course" />
+      </Box>
       {details.image && <Box component="img" src={details.image} alt="" sx={{ width: 160, height: 96, objectFit: "cover", borderRadius: "12px", mb: 1.5 }} />}
       <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
         <Button component="label" sx={{ ...pillButton, width: "auto", py: 0.7, bgcolor: ink, color: "#fff", "&:hover": { bgcolor: "#132A46" } }}>
@@ -577,6 +673,7 @@ function CourseDetails({ details, setDetails, onSave }) {
           Save details
         </Button>
       </Box>
+      <Typography sx={{ color: muted, fontSize: 13, mt: 1.25 }}>The cover is resized to 1600px and compressed before it is saved.</Typography>
     </Box>
   );
 }

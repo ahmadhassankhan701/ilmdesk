@@ -1,361 +1,280 @@
 "use client";
-import {
-  Alert,
-  Backdrop,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  styled,
-  Typography,
-} from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import PCourseSlimCard from "@/components/PopularCourses/PCourseSlimCard";
-import { useAuth } from "@/context/AuthContext";
+
+import { Suspense, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
-import { db, storage } from "@/firebase";
-import { toast } from "react-toastify";
-import { CloudUpload } from "@mui/icons-material";
+import { Box, Button, Skeleton, Typography } from "@mui/material";
+import { CloudUploadOutlined } from "@mui/icons-material";
+import { addDoc, collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  height: 1,
-  overflow: "hidden",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  whiteSpace: "nowrap",
-  width: 1,
-});
+import { toast } from "react-toastify";
+import { db, storage } from "@/firebase";
+import { useAuth } from "@/context/AuthContext";
+import { accent, accentHover, ink, muted, primary, primaryHover } from "@/lib/brand";
+import { pageBackground, pageColumnSx } from "@/lib/pageColumn";
+import { prepareReceipt, UploadPrepError } from "@/lib/prepareUpload";
+import { authSearch, isBrandAdminUid, isOwnerEmail, ROLES } from "@/lib/roles";
+import PageTrail from "@/components/PageTrail";
+
+const ACCOUNTS = [
+  ["JazzCash", "+92 308 6403836"],
+  ["Easypaisa", "+92 308 6403836"],
+  ["Allied Bank", "02370010087574630015"],
+];
+
+function priceLabel(value) {
+  const amount = Number(value);
+  if (value === undefined || value === null || value === "" || amount === 0) return "Free";
+  return `Rs ${value}`;
+}
+
+function isDeskAdmin(user) {
+  if (!user) return false;
+  return user.role === ROLES.owner || isOwnerEmail(user.email) || isBrandAdminUid(user.uid);
+}
+
 function CheckoutPage() {
-  const { state } = useAuth();
-  const route = useRouter();
+  const { state, ready } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const courseId = searchParams.get("id");
-  const [content, setContent] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const userId = state?.user?.uid;
-  const userName = state?.user?.name;
-  // Redirect if not logged in
-  useEffect(() => {
-    if (!state?.user) {
-      route.push(`/auth?redirect=/courses/checkout&id=${courseId}`);
-    }
-  }, [state]);
-  // Fetch content and enrollment only when userId & courseId are available
-  useEffect(() => {
-    if (userId && courseId) {
-      checkIfEnrolled();
-      fetchContent();
-    }
-  }, [userId, courseId]);
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const redirected = useRef(false);
+  const user = state?.user;
+  const userId = user?.uid;
+  const userName = user?.name;
 
-  const fetchContent = async () => {
-    try {
-      setLoading(true);
-      const docRef = doc(db, "courses", courseId);
-      const snapshot = await getDoc(docRef);
-      if (snapshot.exists()) {
-        setContent({ key: snapshot.id, ...snapshot.data(), ratings: [] });
-      }
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
-      console.log(error);
-      toast.error("Failed to fetch content");
-    }
+  const leave = (message, href) => {
+    if (redirected.current) return;
+    redirected.current = true;
+    toast.info(message);
+    router.replace(href);
   };
 
-  const checkIfEnrolled = async () => {
-    try {
-      const docRef = collection(db, "Payments");
-      const q = query(
-        docRef,
-        where("courseId", "==", courseId),
-        where("userId", "==", userId)
-      );
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        return;
-      }
-
-      const status = querySnapshot.docs[0].data().status;
-
-      if (status === "approved") {
-        toast.success("Already enrolled in this course");
-        route.push("/dashboard/courses");
-      } else if (status === "pending") {
-        toast.success("Paid already. Wait for approval");
-        route.push("/dashboard/courses");
-      }
-    } catch (error) {
-      console.log(error);
+  useEffect(() => {
+    if (!ready) return undefined;
+    if (!user) {
+      if (redirected.current) return undefined;
+      redirected.current = true;
+      router.replace(`/auth${authSearch({ redirectTo: "/courses/checkout", courseId: courseId || "" })}`);
+      return undefined;
     }
-  };
-  const handleFileInput = async (e) => {
+    if (isDeskAdmin(user)) {
+      leave("Checkout is for students. Opening the dashboard.", "/dashboard");
+      return undefined;
+    }
+    if (!courseId) {
+      setLoading(false);
+      setCourse(null);
+      return undefined;
+    }
+
+    let ignore = false;
+
+    (async () => {
+      try {
+        setLoading(true);
+        setFailed(false);
+        const [courseSnap, payments] = await Promise.all([
+          getDoc(doc(db, "courses", courseId)),
+          getDocs(query(collection(db, "Payments"), where("courseId", "==", courseId), where("userId", "==", userId))),
+        ]);
+        if (ignore || redirected.current) return;
+        const courseData = courseSnap.exists() ? courseSnap.data() : null;
+        const students = Array.isArray(courseData?.students) ? courseData.students : [];
+        const enrolled = students.includes(userId) || payments.docs.some((item) => item.data().status === "approved");
+        if (enrolled) {
+          leave("You are already enrolled in this course.", "/dashboard/courses");
+          return;
+        }
+        if (payments.docs.some((item) => item.data().status === "pending")) {
+          leave("This receipt is already with the desk.", "/dashboard/account");
+          return;
+        }
+        setCourse(courseSnap.exists() ? { id: courseSnap.id, ...courseData } : null);
+      } catch (error) {
+        console.error(error);
+        if (!ignore && !redirected.current) {
+          setFailed(true);
+          toast.error("Could not open checkout.");
+        }
+      } finally {
+        if (!ignore && !redirected.current) setLoading(false);
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [ready, user, userId, courseId, router]);
+
+  const uploadReceipt = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !course) return;
     try {
-      const file = e.target.files[0];
-      if (file === undefined || file === null) {
-        return;
-      }
-      setLoading(true);
-      const formData = new FormData();
-      formData.append("document", file);
-      const filedata = [...formData];
-      const filename = filedata[0][1].name;
-      const fileSize = filedata[0][1].size;
-      const fileExtension = filename.split(".").pop();
-      if (
-        fileExtension !== "png" &&
-        fileExtension !== "jpg" &&
-        fileExtension !== "jpeg" &&
-        fileExtension !== "avif" &&
-        fileExtension !== "pdf"
-      ) {
-        setLoading(false);
-        toast.error("File should be image or pdf");
-        return;
-      }
-      if (fileSize > 2000000) {
-        setLoading(false);
-        toast.error("File size should not exceed 2MB");
-        return;
-      }
-      const path = `Payments/${courseId}/${userId}`;
-      const storageRef = ref(storage, path);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      const paymentData = {
-        userId: userId,
-        userName: userName,
+      setSending(true);
+      const ready = await prepareReceipt(file);
+      const storageRef = ref(storage, `Payments/${courseId}/${userId}`);
+      await uploadBytes(storageRef, ready, { contentType: ready.type });
+      const receiptUrl = await getDownloadURL(storageRef);
+      await addDoc(collection(db, "Payments"), {
+        userId,
+        userName: userName || "",
         courseId,
-        courseName: content ? content.title : "",
-        amount: content ? content.price : 0,
+        courseName: course.title || "",
+        amount: course.price || 0,
         status: "pending",
-        receiptUrl: url, // Uploaded file
+        receiptUrl,
         paidAt: new Date(),
         confirmedAt: new Date(),
-      };
-      const docRef = collection(db, "Payments");
-      await addDoc(docRef, paymentData);
-      setLoading(false);
-      toast.success("Receipt uploaded. Wait for confirmation!");
-      route.push("/dashboard/account");
+      });
+      toast.success("Receipt uploaded. Wait for confirmation.");
+      router.push("/dashboard/account");
     } catch (error) {
-      setLoading(false);
-      toast.error("Something went wrong");
-      console.log(error);
+      console.error(error);
+      toast.error(error instanceof UploadPrepError ? error.message : "The receipt could not be sent.");
+    } finally {
+      setSending(false);
     }
   };
-  const handleJazzcash = async () => {
-    alert("Coming Soon");
-    // try {
-    //   setLoading(true);
-    //   const res = await fetch("/api/jazzcash", {
-    //     method: "POST",
-    //     body: JSON.stringify({
-    //       amount: 500, // PKR
-    //       email: "test@example.com",
-    //       phone: "03001234567",
-    //     }),
-    //   });
 
-    //   const { paymentData, paymentURL } = await res.json();
+  const title = course?.title || "Checkout";
 
-    //   // Create a form and submit it to JazzCash
-    //   const form = document.createElement("form");
-    //   form.method = "POST";
-    //   form.action = paymentURL;
-
-    //   for (const key in paymentData) {
-    //     const input = document.createElement("input");
-    //     input.type = "hidden";
-    //     input.name = key;
-    //     input.value = paymentData[key];
-    //     form.appendChild(input);
-    //   }
-
-    //   document.body.appendChild(form);
-    //   form.submit();
-    // } catch (error) {
-    //   console.log(error);
-    // }
-  };
   return (
-    <Box display={"flex"} justifyContent={"center"} alignItems={"center"}>
-      <Box width={"80%"} mt={10}>
-        <Backdrop
-          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-          open={loading}
+    <Box sx={{ bgcolor: pageBackground, color: ink, pt: { xs: "96px", md: "112px" }, pb: { xs: 8, md: 12 } }}>
+      <Box sx={pageColumnSx}>
+        <Box
+          sx={{
+            borderRadius: { xs: "24px", md: "32px" },
+            background: "linear-gradient(145deg, #0A192F 0%, #071322 55%, #123044 100%)",
+            px: { xs: 3, sm: 4.5, md: 6 },
+            py: { xs: 5, md: 7 },
+          }}
         >
-          <img src={"/loader.gif"} />
-        </Backdrop>
-        <Box sx={{ padding: 4, backgroundColor: "#f5f5f5" }}>
-          <Grid container spacing={4}>
-            {/* Left Side – Course Details */}
-            <Grid size={{ xs: 12, sm: 7 }}>
-              <PCourseSlimCard data={content} />
-            </Grid>
-
-            {/* Right Side – Payment Options */}
-            <Grid size={{ xs: 12, sm: 5 }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Choose a Payment Method
-                  </Typography>
-                  <Box>
-                    <Typography
-                      sx={{ fontSize: 15, color: "#000", mt: 2 }}
-                      variant="h6"
-                      gutterBottom
-                    >
-                      Title: Muhammad Qasim
-                    </Typography>
-                    <Box
-                      display={"flex"}
-                      justifyContent={"space-between"}
-                      alignItems={"center"}
-                      flexWrap={"wrap"}
-                    >
-                      <Typography
-                        sx={{ fontSize: 15, color: "gray", mt: 2 }}
-                        variant="h6"
-                        gutterBottom
-                      >
-                        Jazzcash: +923086403836
-                      </Typography>
-                      <Typography
-                        sx={{ fontSize: 15, color: "gray", mt: 2 }}
-                        variant="h6"
-                        gutterBottom
-                      >
-                        Easypaisa: +923086403836
-                      </Typography>
-                    </Box>
-                    <Typography
-                      sx={{ fontSize: 15, color: "gray", mt: 2 }}
-                      variant="h6"
-                      gutterBottom
-                    >
-                      Allied Bank: 02370010087574630015
-                    </Typography>
-                    <Alert severity="info">
-                      Please make payment and upload the receipt. You will
-                      receive a confirmation of enrolment
-                    </Alert>
-                    <Button
-                      component="label"
-                      role={undefined}
-                      variant="contained"
-                      tabIndex={-1}
-                      startIcon={<CloudUpload />}
-                      onChange={(e) => handleFileInput(e)}
-                      size="small"
-                      color="success"
-                      sx={{ mt: 1 }}
-                    >
-                      Upload Receipt
-                      <VisuallyHiddenInput type="file" />
-                    </Button>
-                  </Box>
-                  <Typography
-                    variant="p"
-                    sx={{
-                      fontSize: 16,
-                      fontWeight: 700,
-                      lineHeight: 1,
-                      color: "gray",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 3,
-                      textAlign: "center",
-                      my: 2,
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: "42%",
-                        height: 2,
-                        marginBottom: 5,
-                        display: "inline-block",
-                        background: "gray",
-                      }}
-                    ></span>
-                    OR
-                    <span
-                      style={{
-                        width: "42%",
-                        height: 2,
-                        marginBottom: 5,
-                        display: "inline-block",
-                        background: "gray",
-                      }}
-                    ></span>
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 2,
-                      mt: 2,
-                    }}
-                  >
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleJazzcash}
-                    >
-                      Pay with JazzCash
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => alert("Easypaisa Payment Coming Soon")}
-                    >
-                      Pay with Easypaisa
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => alert("Bank Transfer Coming Soon")}
-                    >
-                      Bank Transfer
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
+          <Typography
+            component="p"
+            sx={{
+              color: "#fff",
+              border: "1px solid rgba(255,255,255,0.16)",
+              borderRadius: 999,
+              px: 1.5,
+              py: 0.4,
+              fontSize: 12,
+              letterSpacing: 0.6,
+              mb: 2.5,
+              width: "fit-content",
+            }}
+          >
+            Checkout
+          </Typography>
+          <Typography component="h1" sx={{ color: "#fff", fontWeight: 700, letterSpacing: -1.2, lineHeight: 1.05, fontSize: { xs: 36, sm: 48, md: 60 }, maxWidth: 760 }}>
+            {loading ? "Checkout" : title}
+          </Typography>
+          <Typography sx={{ color: "rgba(255,255,255,0.72)", fontSize: 17, lineHeight: 1.65, maxWidth: 560, mt: 2.5 }}>
+            {course ? `Pay ${priceLabel(course.price)}, then upload the receipt. The desk confirms the enrolment.` : "Pay the account below, then upload the receipt."}
+          </Typography>
+          <PageTrail onDark items={[{ label: "Home", href: "/" }, { label: "Courses", href: "/courses" }, { label: loading ? "Checkout" : title }]} />
         </Box>
+
+        {!ready || loading ? (
+          <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: { xs: "1fr", md: "1.2fr 0.8fr" }, gap: 1.5 }}>
+            <Skeleton variant="rounded" height={320} sx={{ borderRadius: "22px", bgcolor: "rgba(10, 25, 47, 0.08)" }} />
+            <Skeleton variant="rounded" height={320} sx={{ borderRadius: "22px", bgcolor: "rgba(10, 25, 47, 0.08)" }} />
+          </Box>
+        ) : failed ? (
+          <Notice title="Checkout could not be opened" body="Refresh the page and try again." />
+        ) : !course ? (
+          <Notice title="This course is not listed" body="Go back to the course list and choose another." />
+        ) : (
+          <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.2fr) minmax(260px, 0.8fr)" }, gap: 1.5, alignItems: "start" }}>
+            <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "22px", p: { xs: 2.5, md: 3 } }}>
+              <Typography sx={{ color: primary, fontSize: 13, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase" }}>Pay to</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 28, letterSpacing: -0.5, mt: 0.6 }}>Muhammad Qasim</Typography>
+              <Typography sx={{ color: muted, mt: 1, lineHeight: 1.6 }}>
+                Send {priceLabel(course.price)} from JazzCash, Easypaisa, or Allied Bank, then upload a photo or PDF of the receipt.
+              </Typography>
+              <Box sx={{ display: "grid", mt: 2 }}>
+                {ACCOUNTS.map(([name, value]) => (
+                  <Box key={name} sx={{ display: "flex", justifyContent: "space-between", gap: 2, py: 1.25, borderTop: "1px solid #E2E8EC" }}>
+                    <Typography sx={{ fontWeight: 700 }}>{name}</Typography>
+                    <Typography sx={{ color: muted, textAlign: "right" }}>{value}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+
+            <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "22px", p: { xs: 2.5, md: 3 } }}>
+              <Typography sx={{ color: primary, fontSize: 13, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase" }}>Amount</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 36, letterSpacing: -0.8, lineHeight: 1.1, mt: 0.5 }}>{priceLabel(course.price)}</Typography>
+              <Button
+                component="label"
+                variant="contained"
+                disabled={sending}
+                startIcon={<CloudUploadOutlined />}
+                sx={{
+                  mt: 2.5,
+                  width: "100%",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  borderRadius: 999,
+                  py: 1.15,
+                  bgcolor: accent,
+                  boxShadow: "none",
+                  "&:hover": { bgcolor: accentHover, boxShadow: "none" },
+                }}
+              >
+                {sending ? "Uploading" : "Upload receipt"}
+                <input hidden type="file" accept="image/png,image/jpeg,image/jpg,image/avif,application/pdf" onChange={uploadReceipt} />
+              </Button>
+              <Typography sx={{ color: muted, fontSize: 13, mt: 1.25, lineHeight: 1.5 }}>Photos are resized and compressed. A PDF receipt must be under 2MB.</Typography>
+              <Box sx={{ display: "grid", gap: 1, mt: 2.5 }}>
+                {["Pay with JazzCash", "Pay with Easypaisa", "Bank transfer"].map((label) => (
+                  <Button
+                    key={label}
+                    disabled
+                    variant="outlined"
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 600,
+                      borderRadius: 999,
+                      py: 1,
+                      borderColor: "#E2E8EC",
+                      color: muted,
+                    }}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </Box>
+              <Typography sx={{ color: muted, fontSize: 13, mt: 1.25 }}>These payments are not open yet.</Typography>
+            </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   );
 }
-const PageWrapper = () => (
-  <Suspense
-    fallback={
-      <Backdrop
-        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={true}
-      >
-        <img src={"/loader.gif"} width={100} height={100} />
-      </Backdrop>
-    }
-  >
-    <CheckoutPage />
-  </Suspense>
-);
-export default PageWrapper;
+
+function Notice({ title, body }) {
+  return (
+    <Box sx={{ mt: 3, bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "24px", p: { xs: 3, md: 4 } }}>
+      <Typography sx={{ fontWeight: 700, fontSize: 22 }}>{title}</Typography>
+      <Typography sx={{ color: muted, mt: 1 }}>{body}</Typography>
+      <Typography component={Link} href="/courses" sx={{ display: "inline-block", color: primary, fontWeight: 600, mt: 1.5, textDecoration: "none", "&:hover": { color: primaryHover } }}>
+        Back to courses
+      </Typography>
+    </Box>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<Box sx={{ bgcolor: pageBackground, minHeight: "50vh" }} />}>
+      <CheckoutPage />
+    </Suspense>
+  );
+}

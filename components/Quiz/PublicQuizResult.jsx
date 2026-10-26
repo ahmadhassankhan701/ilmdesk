@@ -121,52 +121,41 @@ const PublicQuizResult = ({
                     {quiz.questions[current].question}
                   </Typography>
                 </Box>
-                <Box>
-                  {quiz.questions[current].options.map((option, idx) => (
-                    <Box
-                      key={idx}
-                      sx={[
-                        {
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 2,
-                          boxShadow: "0 0 10px 0 rgba(0,0,0,0.1)",
-                          margin: 2,
-                          padding: 1,
-                          borderRadius: 2,
-                          my: 2,
-                          cursor: "pointer",
-                        },
-                        idx === quiz.questions[current].correctOption
-                          ? summary.summary[current].selectedOption === null
-                            ? { border: "2px solid gray" }
-                            : { border: "2px solid green" }
-                          : summary.summary[current].selectedOption === idx
-                          ? { border: "2px solid red" }
-                          : { border: "none" },
-                      ]}
-                    >
-                      <Avatar>{idx + 1}</Avatar>
-                      <Typography variant="body1" component="div">
-                        {option}
-                      </Typography>
-                    </Box>
-                  ))}
+                <Box sx={{ display: "grid", gap: 1, px: 2, pb: 1 }}>
+                  {quiz.questions[current].options.map((option, idx) => {
+                    const selected = summary.summary[current]?.selectedOption;
+                    const correct = Number(quiz.questions[current].correctOption) === idx;
+                    const chosen = selected !== null && selected !== undefined && Number(selected) === idx;
+                    const tone = correct ? "correct" : chosen ? "wrong" : "plain";
+                    const note = correct && chosen ? "Your answer · Correct" : correct ? "Correct" : chosen ? "Your answer" : "";
+                    const toneSx = {
+                      correct: { border: "1px solid #1B7F4E", bgcolor: "rgba(27, 127, 78, 0.08)", mark: "#1B7F4E", note: "#1B7F4E" },
+                      wrong: { border: "1px solid #D64545", bgcolor: "rgba(214, 69, 69, 0.08)", mark: "#D64545", note: "#D64545" },
+                      plain: { border: "1px solid #E2E8EC", bgcolor: "#fff", mark: "#F0F3F5", note: "#5C6B7A" },
+                    }[tone];
+                    return (
+                      <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1.5, borderRadius: "16px", border: toneSx.border, bgcolor: toneSx.bgcolor, px: 1.5, py: 1.25 }}>
+                        <Avatar sx={{ bgcolor: tone === "plain" ? "#F0F3F5" : toneSx.mark, color: tone === "plain" ? "#0A192F" : "#fff", width: 36, height: 36, fontSize: 14, fontWeight: 700 }}>
+                          {String.fromCharCode(65 + idx)}
+                        </Avatar>
+                        <Box>
+                          <Typography>{option}</Typography>
+                          {note ? <Typography sx={{ color: toneSx.note, fontSize: 12, fontWeight: 700, mt: 0.25 }}>{note}</Typography> : null}
+                        </Box>
+                      </Box>
+                    );
+                  })}
                 </Box>
-                <Box ml={2}>
-                  <Typography
-                    sx={{
-                      fontSize: 16,
-                      fontWeight: "800",
-                      color: "red",
-                    }}
-                  >
-                    Explanation
-                  </Typography>
-                  <Typography id={"explanation"}>
-                    {renderHTML(quiz.questions[current].explanation)}
-                  </Typography>
-                </Box>
+                {String(quiz.questions[current].explanation || "").replace(/<[^>]*>/g, "").trim() ? (
+                  <Box sx={{ mx: 2, mt: 1, pt: 1.5, borderTop: "1px solid #E2E8EC" }}>
+                    <Typography sx={{ fontSize: 13, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase", color: "#0D9AAC" }}>
+                      Explanation
+                    </Typography>
+                    <Typography id={"explanation"} sx={{ mt: 0.75, lineHeight: 1.6 }}>
+                      {renderHTML(quiz.questions[current].explanation)}
+                    </Typography>
+                  </Box>
+                ) : null}
                 <Box
                   sx={{
                     display: "flex",

@@ -78,6 +78,13 @@ export function ModuleChaptersPage({ classSlug, subjectSlug, moduleSlug }) {
     };
   }, [classSlug, subjectSlug, moduleSlug, pathname, router]);
 
+  useEffect(() => {
+    if (!catalog) return;
+    const id = window.location.hash.replace(/^#/, "");
+    if (!id) return;
+    document.getElementById(id)?.scrollIntoView();
+  }, [catalog]);
+
   const place = catalog
     ? {
         moduleName: catalog.module.name || "Module",

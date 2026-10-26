@@ -22,7 +22,7 @@ service firebase.storage {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if request.auth != null
         && request.auth.uid == userId
-        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.size < 400 * 1024
         && request.resource.contentType.matches('image/.*');
     }
 
@@ -36,7 +36,7 @@ service firebase.storage {
     match /ClassImages/{ownerId}/{fileName} {
       allow read: if true;
       allow create, update: if isBrandAdmin()
-        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.size < 800 * 1024
         && request.resource.contentType.matches('image/.*');
       allow delete: if isBrandAdmin();
     }
@@ -44,7 +44,7 @@ service firebase.storage {
     match /CourseImages/{ownerId}/{fileName} {
       allow read: if true;
       allow create, update: if isBrandAdmin()
-        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.size < 800 * 1024
         && request.resource.contentType.matches('image/.*');
       allow delete: if isBrandAdmin();
     }
@@ -52,7 +52,7 @@ service firebase.storage {
     match /CoursesImages/{fileName} {
       allow read: if true;
       allow create, update: if isBrandAdmin()
-        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.size < 500 * 1024
         && request.resource.contentType.matches('image/.*');
       allow delete: if isBrandAdmin();
     }
@@ -60,7 +60,7 @@ service firebase.storage {
     match /ClassPDFFiles/{ownerId}/{fileName} {
       allow read: if true;
       allow create, update: if isBrandAdmin()
-        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType == 'application/pdf';
       allow delete: if isBrandAdmin();
     }
@@ -68,7 +68,7 @@ service firebase.storage {
     match /CoursePDFFiles/{ownerId}/{fileName} {
       allow read: if true;
       allow create, update: if isBrandAdmin()
-        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType == 'application/pdf';
       allow delete: if isBrandAdmin();
     }

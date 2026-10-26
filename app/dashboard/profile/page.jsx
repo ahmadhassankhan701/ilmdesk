@@ -11,6 +11,7 @@ import { Field, ink, muted, pillButton, primary, primaryHover } from "@/componen
 import { auth, db, storage } from "@/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { updateOwnProfile } from "@/lib/accounts";
+import { prepareImage, UploadPrepError } from "@/lib/prepareUpload";
 import { roleLabel } from "@/lib/roles";
 import {
   EDUCATION_LEVELS,
@@ -75,21 +76,19 @@ export default function StudentProfile() {
 
   const shownImage = preview || profile?.image || "";
 
-  const chooseImage = (event) => {
+  const chooseImage = async (event) => {
     const next = event.target.files?.[0];
     event.target.value = "";
     if (!next) return;
-    if (!next.type.startsWith("image/")) {
-      toast.error("Choose an image file.");
-      return;
+    try {
+      const prepared = await prepareImage(next, "profile");
+      if (preview.startsWith("blob:")) URL.revokeObjectURL(preview);
+      setFile(prepared);
+      setPreview(URL.createObjectURL(prepared));
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof UploadPrepError ? error.message : "This photo could not be prepared.");
     }
-    if (next.size > 2_000_000) {
-      toast.error("Image must be 2MB or smaller.");
-      return;
-    }
-    if (preview.startsWith("blob:")) URL.revokeObjectURL(preview);
-    setFile(next);
-    setPreview(URL.createObjectURL(next));
   };
 
   const removePreview = () => {

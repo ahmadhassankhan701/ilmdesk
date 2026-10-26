@@ -6,8 +6,12 @@ import { Close } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { fieldSx, ink, muted, pillButton, primary, primaryHover } from "@/components/AuthFrame";
 import RichTextField from "@/components/Dashboard/RichTextField";
+import { accent } from "@/lib/brand";
 import { loadLesson, removeStoredFile, saveLesson, uploadCurriculumFile } from "@/lib/curriculum";
 import { DIFFICULTIES, emptyQuestion, newBlock, youtubeId } from "@/lib/curriculumFormat";
+import { PDF_MAX_BYTES, pdfLimitMessage } from "@/lib/mediaLimits";
+import { prepareImage, UploadPrepError } from "@/lib/prepareUpload";
+import { mergeQuestions, parseCsv, questionsFromTable, sampleCsv } from "@/lib/quizSheet";
 
 const TABS = [
   ["text", "Text"],
@@ -17,8 +21,6 @@ const TABS = [
   ["quiz", "Quiz"],
 ];
 const MAX_IMAGES = 8;
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const MAX_PDF_BYTES = 20 * 1024 * 1024;
 const pine = "#0D9AAC";
 
 function ofType(blocks, type) {
@@ -45,7 +47,9 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const [tab, setTab] = useState("text");
+  const [editingQuizId, setEditingQuizId] = useState(null);
   const [videoDraft, setVideoDraft] = useState("");
   const savedPaths = useRef(new Set());
   const blocksRef = useRef([]);
@@ -61,6 +65,7 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
         if (ignore) return;
         savedPaths.current = new Set(next.map((block) => block.path).filter(Boolean));
         setBlocks(lessonBlocks(next));
+        setEditingQuizId(null);
       } catch (error) {
         console.error(error);
         toast.error("Could not open this lesson.");
@@ -135,7 +140,7 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
     });
   };
 
-  const addImages = (event) => {
+  const addImages = async (event) => {
     const files = Array.from(event.target.files || []);
     event.target.value = "";
     const existing = blocks.filter((block) => block.type === "image" && (block.fileUrl || block.previewUrl));
@@ -148,24 +153,27 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
     if (files.length > room) toast.error(room === 1 ? "Only 1 more image can be added." : `Only ${room} more images can be added.`);
     const created = [];
     let featuredAssigned = existing.some((image) => image.featured);
-    chosen.forEach((file) => {
-      if (!file.type.startsWith("image/")) {
-        toast.error("Choose an image file.");
-        return;
+    setPreparing(true);
+    try {
+      for (const file of chosen) {
+        try {
+          const prepared = await prepareImage(file, "lesson");
+          created.push({
+            ...newBlock("image"),
+            name: prepared.name,
+            file: prepared,
+            previewUrl: URL.createObjectURL(prepared),
+            featured: !featuredAssigned,
+          });
+          featuredAssigned = true;
+        } catch (error) {
+          console.error(error);
+          toast.error(error instanceof UploadPrepError ? error.message : "This image could not be prepared.");
+        }
       }
-      if (file.size > MAX_IMAGE_BYTES) {
-        toast.error("Each image must be 5MB or smaller.");
-        return;
-      }
-      created.push({
-        ...newBlock("image"),
-        name: file.name,
-        file,
-        previewUrl: URL.createObjectURL(file),
-        featured: !featuredAssigned,
-      });
-      featuredAssigned = true;
-    });
+    } finally {
+      setPreparing(false);
+    }
     if (created.length) setBlocks((current) => [...current, ...created]);
   };
 
@@ -178,8 +186,8 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
         toast.error("Choose a PDF file.");
         return;
       }
-      if (file.size > MAX_PDF_BYTES) {
-        toast.error("Each PDF must be 20MB or smaller.");
+      if (file.size >= PDF_MAX_BYTES) {
+        toast.error(pdfLimitMessage());
         return;
       }
       created.push({
@@ -206,6 +214,15 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
     setVideoDraft("");
   };
 
+  const closeQuizForm = () => {
+    setBlocks((current) => {
+      const quiz = current.find((block) => block.id === editingQuizId);
+      if (quiz && !quiz.quizId && isUntouchedQuiz(quiz)) return current.filter((block) => block.id !== quiz.id);
+      return current;
+    });
+    setEditingQuizId(null);
+  };
+
   const textBlock = blocks.find((block) => block.type === "text");
   const images = ofType(blocks, "image");
   const videos = blocks.filter((block) => block.type === "video" && block.videoId);
@@ -220,7 +237,10 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
       </Typography>
       <Tabs
         value={tab}
-        onChange={(_, value) => setTab(value)}
+        onChange={(_, value) => {
+          if (tab === "quiz" && value !== "quiz") closeQuizForm();
+          setTab(value);
+        }}
         variant="scrollable"
         scrollButtons="auto"
         sx={{
@@ -255,10 +275,10 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
           {tab === "image" && (
             <Box>
               <Typography sx={{ color: muted, fontSize: 14, mb: 1.5 }}>
-                Add up to 8 images, 5MB each. Choose one featured image. Files upload when you publish. {images.length} of 8 added.
+                Add up to 8 images. Each one is resized to 1600px and compressed before it is saved. Choose one featured image. {images.length} of 8 added.
               </Typography>
-              <Button component="label" disabled={saving || images.length >= MAX_IMAGES} sx={{ ...pillButton, width: "auto", py: 0.7, mb: 2, bgcolor: pine, color: "#fff", "&:hover": { bgcolor: "#0A8494" } }}>
-                Add images
+              <Button component="label" disabled={saving || preparing || images.length >= MAX_IMAGES} sx={{ ...pillButton, width: "auto", py: 0.7, mb: 2, bgcolor: pine, color: "#fff", "&:hover": { bgcolor: "#0A8494" } }}>
+                {preparing ? "Preparing…" : "Add images"}
                 <input hidden type="file" accept="image/*" multiple onChange={addImages} />
               </Button>
               {images.length === 0 ? (
@@ -312,7 +332,7 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
           )}
           {tab === "pdf" && (
             <Box>
-              <Typography sx={{ color: muted, fontSize: 14, mb: 1.5 }}>Add PDF files only, up to 20MB each. Files upload when you publish.</Typography>
+              <Typography sx={{ color: muted, fontSize: 14, mb: 1.5 }}>Add PDF files under 5MB. A text export or a 150 dpi scan opens faster. Files upload when you publish.</Typography>
               <Button component="label" disabled={saving} sx={{ ...pillButton, width: "auto", py: 0.7, mb: 2, bgcolor: pine, color: "#fff", "&:hover": { bgcolor: "#0A8494" } }}>
                 Add PDFs
                 <input hidden type="file" accept="application/pdf" multiple onChange={addPdfs} />
@@ -335,26 +355,22 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
             </Box>
           )}
           {tab === "quiz" && (
-            <Box>
-              <Button type="button" onClick={() => setBlocks((current) => [...current, newBlock("quiz")])} sx={{ ...pillButton, width: "auto", py: 0.7, mb: 2, bgcolor: pine, color: "#fff", "&:hover": { bgcolor: "#0A8494" } }}>
-                Add quiz
-              </Button>
-              {quizzes.length === 0 ? (
-                <EmptyNote>No quizzes yet.</EmptyNote>
-              ) : (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                  {quizzes.map((quiz, index) => (
-                    <Box key={quiz.id} sx={{ border: "1px solid #E2E8EC", borderRadius: "16px", p: 1.5 }}>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                        <Typography sx={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: pine }}>Quiz {index + 1}</Typography>
-                        <IconButton aria-label="Remove quiz" onClick={() => removeItem(quiz)}><Close sx={{ fontSize: 18 }} /></IconButton>
-                      </Box>
-                      <QuizBlock block={quiz} onChange={(patch) => patchBlock(quiz.id, patch)} />
-                    </Box>
-                  ))}
-                </Box>
-              )}
-            </Box>
+            <QuizDesk
+              quizzes={quizzes}
+              editing={quizzes.find((quiz) => quiz.id === editingQuizId) || null}
+              onAdd={() => {
+                const created = newBlock("quiz");
+                setBlocks((current) => [...current, created]);
+                setEditingQuizId(created.id);
+              }}
+              onEdit={setEditingQuizId}
+              onBack={closeQuizForm}
+              onRemove={(quiz) => {
+                removeItem(quiz);
+                if (quiz.id === editingQuizId) setEditingQuizId(null);
+              }}
+              onChange={(id, patch) => patchBlock(id, patch)}
+            />
           )}
         </>
       )}
@@ -378,8 +394,136 @@ function EmptyNote({ children }) {
   );
 }
 
+function isUntouchedQuiz(quiz) {
+  const questions = Array.isArray(quiz.questions) ? quiz.questions : [];
+  const blankQuestions =
+    questions.length === 0 ||
+    questions.every(
+      (question) =>
+        !(question.question || "").trim() &&
+        !(question.explanation || "").trim() &&
+        !(question.options || []).some((option) => (option || "").trim())
+    );
+  return !(quiz.quizTitle || "").trim() && !String(quiz.quizNumber || "").trim() && !String(quiz.duration || "").trim() && blankQuestions;
+}
+
+function quizName(quiz, index) {
+  const title = (quiz.quizTitle || "").trim();
+  const number = String(quiz.quizNumber || "").trim();
+  if (number && title) return `${number}. ${title}`;
+  return title || `Quiz ${index + 1}`;
+}
+
+function questionCount(quiz) {
+  return (quiz.questions || []).filter(
+    (question) => (question.question || "").trim() || (question.options || []).some((option) => (option || "").trim())
+  ).length;
+}
+
+function QuizDesk({ quizzes, editing, onAdd, onEdit, onBack, onRemove, onChange }) {
+  if (editing) {
+    return (
+      <Box>
+        <Button type="button" onClick={onBack} sx={{ ...quietButton, mb: 2 }}>
+          Quizzes
+        </Button>
+        <Box sx={{ border: "1px solid #E2E8EC", borderRadius: "16px", p: 1.5 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+            <Typography sx={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: pine }}>
+              {(editing.quizTitle || "").trim() ? "Edit quiz" : "New quiz"}
+            </Typography>
+            <IconButton aria-label="Remove quiz" onClick={() => onRemove(editing)}>
+              <Close sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Box>
+          <QuizBlock block={editing} onChange={(patch) => onChange(editing.id, patch)} />
+        </Box>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Typography sx={{ color: muted, fontSize: 14, lineHeight: 1.6, mb: 1.5 }}>
+        A topic can hold more than one quiz. Open a quiz to edit it.
+      </Typography>
+      <Button type="button" onClick={onAdd} sx={{ ...pillButton, width: "auto", py: 0.7, mb: 2, bgcolor: pine, color: "#fff", "&:hover": { bgcolor: "#0A8494" } }}>
+        {quizzes.length ? "Add more" : "Add quiz"}
+      </Button>
+      {quizzes.length === 0 ? (
+        <EmptyNote>No quizzes yet.</EmptyNote>
+      ) : (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          {quizzes.map((quiz, index) => {
+            const count = questionCount(quiz);
+            return (
+              <Box
+                key={quiz.id}
+                sx={{
+                  display: "flex",
+                  alignItems: { xs: "stretch", sm: "center" },
+                  justifyContent: "space-between",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: 1.5,
+                  border: "1px solid #E2E8EC",
+                  borderRadius: "16px",
+                  px: 1.75,
+                  py: 1.5,
+                }}
+              >
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 700, color: ink }}>{quizName(quiz, index)}</Typography>
+                  <Typography sx={{ color: muted, fontSize: 13, mt: 0.35 }}>
+                    {[
+                      quiz.mode === "offline" ? "Offline" : "Online",
+                      quiz.difficulty,
+                      quiz.duration ? `${quiz.duration} min` : "",
+                      count === 1 ? "1 question" : `${count} questions`,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
+                  <Button type="button" onClick={() => onEdit(quiz.id)} sx={quietButton}>
+                    Edit quiz
+                  </Button>
+                  <IconButton aria-label={`Remove ${quizName(quiz, index)}`} onClick={() => onRemove(quiz)}>
+                    <Close sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Box>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+const quietButton = {
+  ...pillButton,
+  width: "auto",
+  py: 0.6,
+  bgcolor: "transparent",
+  color: ink,
+  border: "1px solid #C9D3D9",
+  "&:hover": { bgcolor: "rgba(13, 154, 172, 0.08)", borderColor: "#C9D3D9" },
+};
+
+function downloadFile(name, blob) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function QuizBlock({ block, onChange }) {
-  const questions = block.questions?.length ? block.questions : [emptyQuestion()];
+  const questions = Array.isArray(block.questions) ? block.questions : [emptyQuestion()];
+  const csvInput = useRef(null);
+  const excelInput = useRef(null);
   const updateQuestion = (index, patch) => {
     onChange({
       questions: questions.map((question, questionIndex) =>
@@ -387,9 +531,50 @@ function QuizBlock({ block, onChange }) {
       ),
     });
   };
+  const addImported = (incoming) => {
+    onChange({ questions: mergeQuestions(questions, incoming) });
+    toast.success(incoming.length === 1 ? "Added 1 question." : `Added ${incoming.length} questions.`);
+  };
+  const importCsv = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      addImported(questionsFromTable(parseCsv(await file.text())));
+    } catch (error) {
+      toast.error(error.message || "Could not read that CSV.");
+    }
+  };
+  const importExcel = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const { questionsFromWorkbook } = await import("@/lib/quizWorkbook");
+      addImported(questionsFromWorkbook(await file.arrayBuffer()));
+    } catch (error) {
+      toast.error(error.message || "Could not read that Excel file.");
+    }
+  };
+  const downloadSampleExcel = async () => {
+    try {
+      const { sampleWorkbook } = await import("@/lib/quizWorkbook");
+      const bytes = sampleWorkbook();
+      downloadFile(
+        "ilmdesk-quiz-sample.xlsx",
+        new Blob([new Uint8Array(bytes)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not prepare the sample Excel file.");
+    }
+  };
   return (
     <Box>
-      <TextField size="small" fullWidth placeholder="Quiz title" value={block.quizTitle} onChange={(event) => onChange({ quizTitle: event.target.value })} sx={{ ...fieldSx, mb: 1.5 }} />
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 120px" }, gap: 1, mb: 1.5 }}>
+        <TextField size="small" fullWidth placeholder="Quiz title" value={block.quizTitle} onChange={(event) => onChange({ quizTitle: event.target.value })} sx={fieldSx} />
+        <TextField size="small" label="Number" value={block.quizNumber || ""} onChange={(event) => onChange({ quizNumber: event.target.value })} sx={fieldSx} />
+      </Box>
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" }, gap: 1, mb: 1.5 }}>
         <TextField select size="small" label="Mode" value={block.mode || "online"} onChange={(event) => onChange({ mode: event.target.value })} sx={fieldSx}>
           <MenuItem value="online">Online</MenuItem>
@@ -402,34 +587,73 @@ function QuizBlock({ block, onChange }) {
         </TextField>
         <TextField size="small" label="Minutes" value={block.duration || ""} onChange={(event) => onChange({ duration: event.target.value })} sx={fieldSx} />
       </Box>
-      {questions.map((question, index) => (
-        <Box key={index} sx={{ borderTop: "1px solid #E2E8EC", pt: 1.5, mt: 1 }}>
-          <TextField size="small" fullWidth placeholder={`Question ${index + 1}`} value={question.question} onChange={(event) => updateQuestion(index, { question: event.target.value })} sx={{ ...fieldSx, mb: 1 }} />
-          {question.options.map((option, optionIndex) => (
+      {questions.length === 0 ? (
+        <EmptyNote>No questions yet.</EmptyNote>
+      ) : (
+        questions.map((question, index) => (
+          <Box key={index} sx={{ borderTop: "1px solid #E2E8EC", pt: 1.5, mt: 1 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, mb: 1 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, color: muted }}>Question {index + 1}</Typography>
+              <Button type="button" onClick={() => onChange({ questions: questions.filter((_, questionIndex) => questionIndex !== index) })} sx={{ textTransform: "none", fontWeight: 600, color: accent, minWidth: 0, px: 0.5 }}>
+                Remove question
+              </Button>
+            </Box>
+            <TextField size="small" fullWidth placeholder={`Question ${index + 1}`} value={question.question} onChange={(event) => updateQuestion(index, { question: event.target.value })} sx={{ ...fieldSx, mb: 1 }} />
+            {(question.options || ["", "", "", ""]).map((option, optionIndex) => (
+              <TextField
+                key={optionIndex}
+                size="small"
+                fullWidth
+                placeholder={`Option ${optionIndex + 1}`}
+                value={option}
+                onChange={(event) => {
+                  const options = [...(question.options || ["", "", "", ""])];
+                  options[optionIndex] = event.target.value;
+                  updateQuestion(index, { options });
+                }}
+                sx={{ ...fieldSx, mb: 1 }}
+              />
+            ))}
+            <TextField select size="small" label="Correct option" value={question.correctOption ?? 0} onChange={(event) => updateQuestion(index, { correctOption: Number(event.target.value) })} sx={{ ...fieldSx, mb: 1 }}>
+              {(question.options || ["", "", "", ""]).map((option, optionIndex) => (
+                <MenuItem key={optionIndex} value={optionIndex}>{option || `Option ${optionIndex + 1}`}</MenuItem>
+              ))}
+            </TextField>
             <TextField
-              key={optionIndex}
               size="small"
               fullWidth
-              placeholder={`Option ${optionIndex + 1}`}
-              value={option}
-              onChange={(event) => {
-                const options = [...question.options];
-                options[optionIndex] = event.target.value;
-                updateQuestion(index, { options });
-              }}
-              sx={{ ...fieldSx, mb: 1 }}
+              multiline
+              minRows={2}
+              placeholder="Explanation"
+              value={question.explanation || ""}
+              onChange={(event) => updateQuestion(index, { explanation: event.target.value })}
+              sx={fieldSx}
             />
-          ))}
-          <TextField select size="small" label="Correct option" value={question.correctOption ?? 0} onChange={(event) => updateQuestion(index, { correctOption: Number(event.target.value) })} sx={{ ...fieldSx, mb: 1 }}>
-            {question.options.map((option, optionIndex) => (
-              <MenuItem key={optionIndex} value={optionIndex}>{option || `Option ${optionIndex + 1}`}</MenuItem>
-            ))}
-          </TextField>
-        </Box>
-      ))}
-      <Button type="button" onClick={() => onChange({ questions: [...questions, emptyQuestion()] })} sx={{ ...pillButton, width: "auto", py: 0.6, mt: 1, bgcolor: "transparent", color: ink, border: "1px solid #C9D3D9" }}>
-        Add question
-      </Button>
+          </Box>
+        ))
+      )}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5 }}>
+        <Button type="button" onClick={() => onChange({ questions: [...questions, emptyQuestion()] })} sx={quietButton}>
+          Add question
+        </Button>
+        <Button type="button" onClick={() => excelInput.current?.click()} sx={quietButton}>
+          Import Excel
+        </Button>
+        <Button type="button" onClick={() => csvInput.current?.click()} sx={quietButton}>
+          Import CSV
+        </Button>
+        <Button type="button" onClick={downloadSampleExcel} sx={quietButton}>
+          Sample Excel
+        </Button>
+        <Button type="button" onClick={() => downloadFile("ilmdesk-quiz-sample.csv", new Blob([sampleCsv()], { type: "text/csv;charset=utf-8" }))} sx={quietButton}>
+          Sample CSV
+        </Button>
+      </Box>
+      <Typography sx={{ color: muted, fontSize: 13, mt: 1.25 }}>
+        In the file, the correct column is 1–4 or A–D.
+      </Typography>
+      <input ref={csvInput} type="file" accept=".csv,text/csv" hidden onChange={importCsv} />
+      <input ref={excelInput} type="file" accept=".xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={importExcel} />
     </Box>
   );
 }

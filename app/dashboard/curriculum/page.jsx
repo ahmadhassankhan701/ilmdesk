@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Box, Button, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
-import { ChevronRight } from "@mui/icons-material";
+import { Box, Button, IconButton, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { ChevronRight, DeleteOutline } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import SideBar from "@/components/SideBar";
 import PageTitle from "@/components/Dashboard/PageTitle";
 import { accent, ink, muted, pillButton, primary, primaryHover } from "@/components/AuthFrame";
 import { useAuth } from "@/context/AuthContext";
-import { listClassItems, listCourses } from "@/lib/curriculum";
+import ConfirmDeleteDialog from "@/components/Dashboard/ConfirmDeleteDialog";
+import { deleteClassTree, deleteCourseTree, listClassItems, listCourses } from "@/lib/curriculum";
 import { ROLES } from "@/lib/roles";
 
 const pine = "#0D9AAC";
@@ -43,6 +44,8 @@ export default function CurriculumPage() {
   const [classes, setClasses] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pending, setPending] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!ready) return;
@@ -72,6 +75,28 @@ export default function CurriculumPage() {
       ignore = true;
     };
   }, [ready, state.user]);
+
+  const removePending = async () => {
+    if (!pending) return;
+    try {
+      setDeleting(true);
+      if (pending.kind === "class") {
+        await deleteClassTree(pending.id);
+        setClasses((current) => current.filter((item) => item.id !== pending.id));
+        toast.success("Class deleted.");
+      } else {
+        await deleteCourseTree(pending.id);
+        setCourses((current) => current.filter((item) => item.id !== pending.id));
+        toast.success("Course deleted.");
+      }
+      setPending(null);
+    } catch (error) {
+      console.error(error);
+      toast.error(pending.kind === "class" ? "Could not delete this class." : "Could not delete this course.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (!ready || state.user?.role !== ROLES.owner) return null;
 
@@ -137,7 +162,19 @@ export default function CurriculumPage() {
                     <TableCell sx={{ fontWeight: 650, color: ink, py: 2, borderColor: "#E2E8EC", fontSize: 15 }}>{item.name}</TableCell>
                     <TableCell sx={{ py: 2, borderColor: "#E2E8EC" }}><Kind label="Class" tone="class" /></TableCell>
                     <TableCell sx={{ color: muted, py: 2, borderColor: "#E2E8EC" }}>Free class syllabus</TableCell>
-                    <TableCell align="right" sx={{ py: 2, borderColor: "#E2E8EC", color: pine }}><ChevronRight /></TableCell>
+                    <TableCell align="right" sx={{ py: 2, borderColor: "#E2E8EC", color: pine }}>
+                      <IconButton
+                        aria-label={`Delete ${item.name}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setPending({ kind: "class", id: item.id, name: item.name });
+                        }}
+                        sx={{ color: accent }}
+                      >
+                        <DeleteOutline />
+                      </IconButton>
+                      <ChevronRight />
+                    </TableCell>
                   </TableRow>
                 ))}
                 {courses.map((item) => (
@@ -150,7 +187,19 @@ export default function CurriculumPage() {
                     <TableCell sx={{ fontWeight: 650, color: ink, py: 2, borderColor: "#E2E8EC", fontSize: 15 }}>{item.title}</TableCell>
                     <TableCell sx={{ py: 2, borderColor: "#E2E8EC" }}><Kind label="Course" tone="course" /></TableCell>
                     <TableCell sx={{ color: muted, py: 2, borderColor: "#E2E8EC" }}>{item.subject || "Subject"} · {(item.modules || []).length} modules · Rs {item.price || "0"}</TableCell>
-                    <TableCell align="right" sx={{ py: 2, borderColor: "#E2E8EC", color: accent }}><ChevronRight /></TableCell>
+                    <TableCell align="right" sx={{ py: 2, borderColor: "#E2E8EC", color: accent }}>
+                      <IconButton
+                        aria-label={`Delete ${item.title}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setPending({ kind: "course", id: item.id, name: item.title });
+                        }}
+                        sx={{ color: accent }}
+                      >
+                        <DeleteOutline />
+                      </IconButton>
+                      <ChevronRight />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -158,6 +207,19 @@ export default function CurriculumPage() {
           )}
         </Box>
       </Box>
+      <ConfirmDeleteDialog
+        open={Boolean(pending)}
+        title={pending?.kind === "course" ? "Delete this course?" : "Delete this class?"}
+        body={
+          pending?.kind === "course"
+            ? `This removes ${pending.name || "this course"}, its modules, lessons, and files. Enrolled students lose access. This cannot be undone.`
+            : `This removes ${pending?.name || "this class"} and everything inside it: subjects, modules, chapters, topics, lessons, quizzes, and files. This cannot be undone.`
+        }
+        confirmLabel={pending?.kind === "course" ? "Delete course" : "Delete class"}
+        busy={deleting}
+        onClose={() => setPending(null)}
+        onConfirm={removePending}
+      />
     </SideBar>
   );
 }

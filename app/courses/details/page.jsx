@@ -1,302 +1,209 @@
 "use client";
 
-import {
-  CheckCircleOutlineOutlined,
-  Star,
-  StarOutline,
-} from "@mui/icons-material";
-import {
-  Avatar,
-  Backdrop,
-  Box,
-  Button,
-  Grid,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-} from "@mui/material";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
-import { toast } from "react-toastify";
+import { Box, Button, Skeleton, Typography } from "@mui/material";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase";
+import { toast } from "react-toastify";
 import renderHTML from "react-render-html";
-import moment from "moment";
-import { useAuth } from "@/context/AuthContext";
+import { db } from "@/firebase";
+import { accent, accentHover, ink, muted, primary, primaryHover } from "@/lib/brand";
+import { pageBackground, pageColumnSx } from "@/lib/pageColumn";
+import PageTrail from "@/components/PageTrail";
 
-const Loader = () => (
-  <Backdrop
-    sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-    open={true}
-  >
-    <img src="/loader.gif" width={100} height={100} alt="Loading..." />
-  </Backdrop>
-);
+function priceLabel(value) {
+  const amount = Number(value);
+  if (!value || amount === 0) return "Free";
+  return `Rs ${value}`;
+}
 
-const Ratings = ({ rating = 5 }) => (
-  <Box display="flex" alignItems="center" gap={1} my={2}>
-    {Array(rating)
-      .fill()
-      .map((_, i) => (
-        <Star
-          key={`filled-${i}`}
-          sx={{ color: "rgb(255, 164, 27)", fontSize: 14 }}
-        />
-      ))}
-    {Array(5 - rating)
-      .fill()
-      .map((_, i) => (
-        <StarOutline
-          key={`outlined-${i}`}
-          sx={{ color: "rgb(255, 164, 27)", fontSize: 14 }}
-        />
-      ))}
-  </Box>
-);
+function levelLabel(value) {
+  if (value === "intermediate") return "Intermediate";
+  if (value === "expert") return "Expert";
+  return "Beginner";
+}
 
-const CourseHeader = ({ content }) => (
-  <Box
-    bgcolor="#fff"
-    borderRadius={2}
-    boxShadow="0px 4px 4px rgba(0, 0, 0, 0.25)"
-    transform="translateY(-50px)"
-    p={1}
-  >
-    <Grid container spacing={2}>
-      <Grid item xs={12} md={4}>
-        <Box display="flex" justifyContent="center" gap={2}>
-          <Avatar
-            src="/avatar.png"
-            sx={{ bgcolor: "transparent", fontSize: 50 }}
-          />
-          <Box textAlign="center">
-            <Typography fontWeight={700} fontSize={16}>
-              Mr Qasim
-            </Typography>
-            <Typography fontWeight={500} fontSize={14}>
-              Sr. Instructor
-            </Typography>
-          </Box>
-        </Box>
-      </Grid>
-      <Grid item xs={12} md={4}>
-        <Box textAlign="center">
-          <Typography fontWeight={700} fontSize={16}>
-            Subject
-          </Typography>
-          <Typography fontWeight={500} fontSize={14}>
-            {content.subject}
-          </Typography>
-        </Box>
-      </Grid>
-      <Grid item xs={12} md={4}>
-        <Box display="flex" justifyContent="center" alignItems="center" gap={1}>
-          <Typography fontWeight={700} fontSize={16} color="rgb(74, 83, 85)">
-            {content.ratings?.length || 5} ratings
-          </Typography>
-          <Ratings rating={content.ratings?.length || 5} />
-        </Box>
-      </Grid>
-    </Grid>
-  </Box>
-);
+function visibleText(html) {
+  return String(html || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-const CourseReviews = ({ reviews }) => (
-  <Box mt={5}>
-    <Typography variant="h6" fontSize={30} fontWeight={700} color="#001920">
-      Reviews
-    </Typography>
-    {reviews.length > 0 ? (
-      reviews.map((review, i) => (
-        <Box
-          key={i}
-          bgcolor="#fff"
-          borderRadius={2}
-          boxShadow="0px 4px 4px rgba(0, 0, 0, 0.25)"
-          p={3}
-          mt={2}
-          display="flex"
-          gap={3}
-        >
-          <Box textAlign="center">
-            <Avatar
-              src={review.userImage || "/avatar.png"}
-              sx={{ fontSize: 50, mb: 1 }}
-            />
-            <Typography fontSize={14} color="gray">
-              {moment(review.createdAt.seconds * 1000).fromNow()}
-            </Typography>
-          </Box>
-          <Box>
-            <Ratings rating={parseInt(review.rating)} />
-            <Typography variant="body1">{review.feedback}</Typography>
-          </Box>
-        </Box>
-      ))
-    ) : (
-      <Typography mt={1}>No reviews available</Typography>
-    )}
-  </Box>
-);
-
-const CourseSidebar = ({ price, courseId, isUserLoggedIn, modules }) => (
-  <Box
-    bgcolor="#fff"
-    p={3}
-    borderRadius={3}
-    mt={5}
-    boxShadow="0px 4px 4px rgba(0, 0, 0, 0.25)"
-  >
-    <Typography fontSize={18} fontWeight={700} color="#001920" mb={0.5}>
-      Course Pricing
-    </Typography>
-    <Typography fontSize={36} fontWeight={700} color="#0D9AAC" mb={0.5}>
-      {price ? `Rs. ${price}` : "Free"}
-    </Typography>
-    <Typography fontSize={22} fontWeight={700} color="#001920" mb={2}>
-      Course Features
-    </Typography>
-    <List>
-      {[
-        "Detailed Explanation",
-        "PDF Material",
-        "Quiz Practice",
-        "Youtube Tutorials",
-      ].map((item, i) => (
-        <ListItem key={i}>
-          <ListItemIcon>
-            <CheckCircleOutlineOutlined sx={{ color: "red" }} />
-          </ListItemIcon>
-          <ListItemText primary={item} />
-        </ListItem>
-      ))}
-    </List>
-    <Typography fontSize={22} fontWeight={700} color="#001920" mb={2}>
-      Course Modules
-    </Typography>
-    <List>
-      {modules?.map((item, i) => (
-        <ListItem key={i}>
-          <ListItemIcon>
-            <CheckCircleOutlineOutlined sx={{ color: "red" }} />
-          </ListItemIcon>
-          <ListItemText primary={item.name} />
-        </ListItem>
-      ))}
-    </List>
-    <Box display="flex" justifyContent="center">
-      <Link
-        href={`/courses/checkout?id=${courseId}`}
-        style={{ textDecoration: "none" }}
-      >
-        <Button
-          sx={{
-            bgcolor: "#FF6B6B",
-            textTransform: "none",
-            color: "#fff",
-            borderRadius: 2,
-            width: 250,
-            "&:hover": { bgcolor: "#E85D5D" },
-          }}
-        >
-          Enroll Now
-        </Button>
-      </Link>
-    </Box>
-  </Box>
-);
-
-const DetailsPage = () => {
-  const { state } = useAuth();
-  const searchParam = useSearchParams();
-  const courseId = searchParam.get("id");
-  const [content, setContent] = useState(null);
-  const [loading, setLoading] = useState(false);
+function CourseDetails() {
+  const searchParams = useSearchParams();
+  const courseId = searchParams.get("id");
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    const fetchContent = async () => {
-      setLoading(true);
-      try {
-        const docRef = doc(db, "courses", courseId);
-        const snapshot = await getDoc(docRef);
-        if (snapshot.exists()) {
-          setContent({ key: snapshot.id, ...snapshot.data(), ratings: [] });
-        }
-      } catch (error) {
-        toast.error("Failed to fetch content");
-        console.error(error);
-      } finally {
+    let ignore = false;
+    (async () => {
+      if (!courseId) {
+        setCourse(null);
         setLoading(false);
+        return;
       }
+      try {
+        setLoading(true);
+        setFailed(false);
+        const snapshot = await getDoc(doc(db, "courses", courseId));
+        if (ignore) return;
+        setCourse(snapshot.exists() ? { id: snapshot.id, ...snapshot.data(), modules: snapshot.data().modules || [] } : null);
+      } catch (error) {
+        console.error(error);
+        if (!ignore) {
+          setFailed(true);
+          toast.error("Could not load this course.");
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
     };
-
-    fetchContent();
   }, [courseId]);
 
-  if (loading) return <Loader />;
-
-  if (!content || !content.title)
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" mt={20}>
-        <Box width={400}>
-          <img src="/no_item.png" width="100%" alt="No content" />
-        </Box>
-      </Box>
-    );
+  const title = course?.title || "Course";
+  const modules = course?.modules || [];
 
   return (
-    <Box display="flex" justifyContent="center">
-      <Box width="80%" mx={{ xs: 1, lg: 10 }}>
-        <Grid container spacing={2} mt={7}>
-          <Grid item xs={12} lg={8} mt={5}>
-            <img
-              src={content.image || "/courseCategImg.jpg"}
-              style={{
-                width: "100%",
-                height: 500,
-                borderTopLeftRadius: 10,
-                borderTopRightRadius: 10,
-                objectFit: "cover",
-              }}
-              alt="Course"
-            />
-            <CourseHeader content={content} />
-            <Box mt={5}>
-              <Typography
-                variant="h6"
-                fontSize={30}
-                fontWeight={700}
-                color="#001920"
-              >
-                Overview
-              </Typography>
-              <Typography variant="body1" fontSize={16} color="#001920" mt={1}>
-                {renderHTML(content.desc)}
-              </Typography>
+    <Box sx={{ bgcolor: pageBackground, color: ink, pt: { xs: "96px", md: "112px" }, pb: { xs: 8, md: 12 } }}>
+      <Box sx={pageColumnSx}>
+        <Box
+          sx={{
+            borderRadius: { xs: "24px", md: "32px" },
+            background: "linear-gradient(145deg, #0A192F 0%, #071322 55%, #123044 100%)",
+            px: { xs: 3, sm: 4.5, md: 6 },
+            py: { xs: 5, md: 7 },
+          }}
+        >
+          <Typography
+            component="p"
+            sx={{
+              color: "#fff",
+              border: "1px solid rgba(255,255,255,0.16)",
+              borderRadius: 999,
+              px: 1.5,
+              py: 0.4,
+              fontSize: 12,
+              letterSpacing: 0.6,
+              mb: 2.5,
+              width: "fit-content",
+            }}
+          >
+            Course
+          </Typography>
+          <Typography component="h1" sx={{ color: "#fff", fontWeight: 700, letterSpacing: -1.2, lineHeight: 1.05, fontSize: { xs: 36, sm: 48, md: 60 }, maxWidth: 760 }}>
+            {loading ? "Course" : title}
+          </Typography>
+          <Typography sx={{ color: "rgba(255,255,255,0.72)", fontSize: 17, lineHeight: 1.65, maxWidth: 560, mt: 2.5 }}>
+            {course ? `${course.subject || "Subject"} · ${levelLabel(course.difficulty)} · ${modules.length === 1 ? "1 module" : `${modules.length} modules`}` : "Notes, videos, and practice for this course."}
+          </Typography>
+          <PageTrail onDark items={[{ label: "Home", href: "/" }, { label: "Courses", href: "/courses" }, { label: loading ? "Course" : title }]} />
+        </Box>
+
+        {loading ? (
+          <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: { xs: "1fr", md: "1.5fr 0.7fr" }, gap: 1.5 }}>
+            <Skeleton variant="rounded" height={360} sx={{ borderRadius: "22px", bgcolor: "rgba(10, 25, 47, 0.08)" }} />
+            <Skeleton variant="rounded" height={280} sx={{ borderRadius: "22px", bgcolor: "rgba(10, 25, 47, 0.08)" }} />
+          </Box>
+        ) : failed ? (
+          <Notice title="This course could not be loaded" body="Refresh the page and try again." />
+        ) : !course ? (
+          <Notice title="This course is not listed" body="Go back to the course list and choose another." />
+        ) : (
+          <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.55fr) minmax(240px, 0.7fr)" }, gap: 1.5, alignItems: "start" }}>
+            <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "22px", overflow: "hidden" }}>
+              {course.image ? (
+                <Box component="img" src={course.image} alt="" sx={{ width: "100%", height: { xs: 220, md: 320 }, objectFit: "cover", display: "block", bgcolor: "#E2E8EC" }} />
+              ) : null}
+              <Box sx={{ p: { xs: 2.5, md: 3.5 } }}>
+                <Typography sx={{ color: primary, fontSize: 13, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase" }}>Overview</Typography>
+                {visibleText(course.desc) ? (
+                  <Box
+                    sx={{
+                      mt: 1.5,
+                      color: ink,
+                      fontSize: 16.5,
+                      lineHeight: 1.75,
+                      "& p": { mb: 1.6 },
+                      "& h1, & h2, & h3": { fontWeight: 700, letterSpacing: -0.4, lineHeight: 1.2, mt: 2.5, mb: 1 },
+                      "& a": { color: primary },
+                      "& ul, & ol": { pl: 3, mb: 1.6 },
+                      "& img": { maxWidth: "100%", height: "auto", borderRadius: "16px", display: "block", my: 2 },
+                    }}
+                  >
+                    {renderHTML(course.desc)}
+                  </Box>
+                ) : (
+                  <Typography sx={{ color: muted, mt: 1.5 }}>This course has no overview yet.</Typography>
+                )}
+              </Box>
             </Box>
-            <CourseReviews reviews={content.ratings} />
-          </Grid>
-          <Grid item xs={12} lg={4}>
-            <CourseSidebar
-              price={content.price}
-              courseId={courseId}
-              isUserLoggedIn={Boolean(state?.user)}
-              modules={content.modules}
-            />
-          </Grid>
-        </Grid>
+
+            <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "22px", p: { xs: 2.5, md: 3 }, position: { md: "sticky" }, top: { md: 96 } }}>
+              <Typography sx={{ color: primary, fontSize: 13, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase" }}>Price</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 36, letterSpacing: -0.8, lineHeight: 1.1, mt: 0.5 }}>{priceLabel(course.price)}</Typography>
+              <Typography sx={{ color: muted, mt: 1, lineHeight: 1.6 }}>Notes, files, videos, and quizzes sit on the modules inside.</Typography>
+              <Button
+                component={Link}
+                href={`/courses/checkout?id=${course.id}`}
+                variant="contained"
+                fullWidth
+                sx={{
+                  mt: 2.5,
+                  textTransform: "none",
+                  fontWeight: 600,
+                  borderRadius: 999,
+                  py: 1.15,
+                  bgcolor: accent,
+                  boxShadow: "none",
+                  "&:hover": { bgcolor: accentHover, boxShadow: "none" },
+                }}
+              >
+                Enroll Now
+              </Button>
+              <Typography sx={{ color: primary, fontSize: 13, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase", mt: 3 }}>Modules</Typography>
+              {modules.length === 0 ? (
+                <Typography sx={{ color: muted, mt: 1.25 }}>No modules on this course yet.</Typography>
+              ) : (
+                <Box sx={{ display: "grid", mt: 1 }}>
+                  {modules.map((module, index) => (
+                    <Typography key={module.id || module.name} sx={{ py: 1.15, borderTop: "1px solid #E2E8EC", fontWeight: 600, lineHeight: 1.4 }}>
+                      {index + 1}. {module.name || "Module"}
+                    </Typography>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   );
-};
+}
 
-const PageWrapper = () => (
-  <Suspense fallback={<Loader />}>
-    <DetailsPage />
-  </Suspense>
-);
+function Notice({ title, body }) {
+  return (
+    <Box sx={{ mt: 3, bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "24px", p: { xs: 3, md: 4 } }}>
+      <Typography sx={{ fontWeight: 700, fontSize: 22 }}>{title}</Typography>
+      <Typography sx={{ color: muted, mt: 1 }}>{body}</Typography>
+      <Typography component={Link} href="/courses" sx={{ display: "inline-block", color: primary, fontWeight: 600, mt: 1.5, textDecoration: "none", "&:hover": { color: primaryHover } }}>
+        Back to courses
+      </Typography>
+    </Box>
+  );
+}
 
-export default PageWrapper;
+export default function Page() {
+  return (
+    <Suspense fallback={<Box sx={{ bgcolor: pageBackground, minHeight: "50vh" }} />}>
+      <CourseDetails />
+    </Suspense>
+  );
+}
