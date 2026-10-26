@@ -21,7 +21,7 @@ import { resolveLessonPath } from "@/lib/classCatalog";
 import { chapterAnchor, classAnchor, lessonPath, modulePath, subjectPath } from "@/lib/classPath";
 import LegacyClassRedirect from "@/components/Classes/LegacyClassRedirect";
 
-const tabs = ["Theory", "Files", "Videos"];
+const tabs = ["Theory", "Files", "Videos", "Quizzes"];
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -319,7 +319,7 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
         { label: "Lesson" },
       ];
 
-  const counts = [null, content.pdfs?.length || 0, youtubeVideos.length];
+  const counts = [null, content.pdfs?.length || 0, youtubeVideos.length, quizzes.length];
 
   return (
     <Box sx={{ bgcolor: pageBackground, color: ink, pt: { xs: "96px", md: "112px" }, pb: { xs: 8, md: 12 } }}>
@@ -454,7 +454,7 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
                     ) : images.length === 0 ? (
                       <Box>
                         <Typography sx={{ fontWeight: 700, fontSize: 22 }}>No notes yet</Typography>
-                        <Typography sx={{ color: muted, mt: 1 }}>Files and videos for this topic are on the other tabs.</Typography>
+                        <Typography sx={{ color: muted, mt: 1 }}>Files, videos, and quizzes for this topic are on the other tabs.</Typography>
                       </Box>
                     ) : null}
                   </>
@@ -521,6 +521,48 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
                     <Box>
                       <Typography sx={{ fontWeight: 700, fontSize: 22 }}>No videos yet</Typography>
                       <Typography sx={{ color: muted, mt: 1 }}>Lecture videos for this topic will show here.</Typography>
+                    </Box>
+                  )
+                )}
+
+                {tab === 3 && (
+                  quizzes.length > 0 ? (
+                    <Box sx={{ display: "grid", gap: 1.25 }}>
+                      {quizzes.map((quiz) => {
+                        const href = quiz.mode === "offline" ? `/classes/offquiz/${quiz.key}` : `/classes/quiz/${quiz.key}`;
+                        const locked = Boolean(quiz.locked);
+                        const meta = [quiz.difficulty, quiz.duration ? `${quiz.duration} min` : "", locked ? "Locked" : ""]
+                          .filter(Boolean)
+                          .join(" · ");
+                        return (
+                          <Box
+                            key={quiz.key}
+                            component={locked ? "div" : Link}
+                            href={locked ? undefined : href}
+                            sx={{
+                              border: "1px solid #E2E8EC",
+                              borderRadius: "16px",
+                              px: 2,
+                              py: 1.5,
+                              textDecoration: "none",
+                              color: locked ? muted : ink,
+                              bgcolor: "#fff",
+                              "&:hover": locked ? {} : { borderColor: primary },
+                            }}
+                          >
+                            <Typography sx={{ fontWeight: 650, fontSize: 16, lineHeight: 1.35 }}>
+                              {quiz.quizNumber ? `${quiz.quizNumber}. ` : ""}
+                              {quiz.quizTitle || "Quiz"}
+                            </Typography>
+                            <Typography sx={{ color: muted, fontSize: 13, mt: 0.4 }}>{meta}</Typography>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  ) : (
+                    <Box>
+                      <Typography sx={{ fontWeight: 700, fontSize: 22 }}>No quizzes yet</Typography>
+                      <Typography sx={{ color: muted, mt: 1 }}>Practice for this topic will show here.</Typography>
                     </Box>
                   )
                 )}
@@ -634,45 +676,6 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
             </Box>
 
             <Box sx={{ display: "grid", gap: 1.5, alignSelf: "start", position: { md: "sticky" }, top: { md: 96 } }}>
-            <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "22px", p: { xs: 2.5, md: 3 } }}>
-              <Typography sx={{ color: primary, fontSize: 13, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase" }}>
-                Quizzes
-              </Typography>
-              {quizzes.length === 0 ? (
-                <Typography sx={{ color: muted, mt: 1.5 }}>No quizzes on this topic yet.</Typography>
-              ) : (
-                <Box sx={{ display: "grid", mt: 1.5 }}>
-                  {quizzes.map((quiz) => {
-                    const href = quiz.mode === "offline" ? `/classes/offquiz/${quiz.key}` : `/classes/quiz/${quiz.key}`;
-                    const locked = Boolean(quiz.locked);
-                    return (
-                      <Box
-                        key={quiz.key}
-                        component={locked ? "div" : Link}
-                        href={locked ? undefined : href}
-                        sx={{
-                          py: 1.25,
-                          borderTop: "1px solid #E2E8EC",
-                          textDecoration: "none",
-                          color: locked ? muted : ink,
-                          "&:hover": locked ? {} : { color: primary },
-                        }}
-                      >
-                        <Typography sx={{ fontWeight: 600, fontSize: 15, lineHeight: 1.35 }}>
-                          {quiz.quizNumber ? `${quiz.quizNumber}. ` : ""}
-                          {quiz.quizTitle || "Quiz"}
-                        </Typography>
-                        <Typography sx={{ color: muted, fontSize: 13, mt: 0.35 }}>
-                          {[quiz.difficulty, quiz.duration ? `${quiz.duration} min` : "", locked ? "Locked" : ""]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </Typography>
-                      </Box>
-                    );
-                  })}
-                </Box>
-              )}
-            </Box>
             <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "22px", p: { xs: 2.5, md: 3 } }}>
               <Typography sx={{ color: primary, fontSize: 13, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase" }}>
                 In this chapter
