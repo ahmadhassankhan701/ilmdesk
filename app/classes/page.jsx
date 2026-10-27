@@ -43,6 +43,7 @@ export default function ClassesPage() {
           .map((item) => ({
             classId: item.id,
             className: item.data().name || "Class",
+            image: item.data().image || "",
             slug: item.data().slug || "",
             createdAt: item.data().createdAt || null,
             subjects: subjects.filter((subject) => subject.classID === item.id),
@@ -165,7 +166,7 @@ export default function ClassesPage() {
                     }}
                   >
                     {item.subjects.map((subject) => {
-                      const image = subjectImage(subject.name);
+                      const image = subject.image || item.image || subjectImage(subject.name);
                       return (
                         <Box
                           key={subject.key}

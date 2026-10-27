@@ -206,54 +206,110 @@ export default function PublicQuizPage({ params }) {
         ) : status === "missing" ? (
           <Notice title="This quiz is not on the syllabus" body="Go back to classes and open the lesson again." />
         ) : status === "intro" ? (
-          <>
-            <Hero
-              title={title}
-              body={
-                locked
+          <Box
+            sx={{
+              display: "grid",
+              width: "100%",
+              gap: 1.5,
+              gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.15fr) minmax(300px, 0.85fr)" },
+              alignItems: "stretch",
+            }}
+          >
+            <Box
+              sx={{
+                borderRadius: { xs: "24px", md: "28px" },
+                background: "linear-gradient(145deg, #0A192F 0%, #071322 55%, #123044 100%)",
+                px: { xs: 2.5, md: 4 },
+                py: { xs: 3, md: 4 },
+                display: "flex",
+                flexDirection: "column",
+                minWidth: 0,
+              }}
+            >
+              <Typography
+                component="p"
+                sx={{
+                  color: "#fff",
+                  border: "1px solid rgba(255,255,255,0.16)",
+                  borderRadius: 999,
+                  px: 1.5,
+                  py: 0.4,
+                  fontSize: 12,
+                  letterSpacing: 0.6,
+                  mb: 2,
+                  width: "fit-content",
+                }}
+              >
+                Quiz
+              </Typography>
+              <Typography component="h1" sx={{ color: "#fff", fontWeight: 700, letterSpacing: -0.8, lineHeight: 1.1, fontSize: { xs: 32, md: 44 } }}>
+                {title}
+              </Typography>
+              <Typography sx={{ color: "rgba(255,255,255,0.72)", fontSize: 16, lineHeight: 1.65, mt: 1.5, maxWidth: 520 }}>
+                {locked
                   ? "This practice is closed for now."
-                  : "Put your name on the paper, then work through the questions. You can move back and forth before you submit."
-              }
-            />
-            <Box sx={{ mt: 3, bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "22px", p: { xs: 2.5, md: 3 }, maxWidth: 640 }}>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                <Meta label="Questions" value={quizLength || "None"} />
-                <Meta label="Time" value={timed ? `${minutes} min` : "Untimed"} />
-                {quiz?.difficulty ? <Meta label="Level" value={quiz.difficulty} /> : null}
+                  : "Put your name on the paper, then work through the questions. You can move back and forth before you submit."}
+              </Typography>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: quiz?.difficulty ? "repeat(3, minmax(0, 1fr))" : "1fr 1fr" }, gap: 1, mt: 3 }}>
+                <Meta onDark label="Questions" value={quizLength || "None"} />
+                <Meta onDark label="Time" value={timed ? `${minutes} min` : "Untimed"} />
+                {quiz?.difficulty ? <Meta onDark span label="Level" value={quiz.difficulty} /> : null}
               </Box>
+              <Box sx={{ mt: "auto" }}>
+                <PageTrail onDark items={[{ label: "Classes", href: "/classes" }, { label: title }]} />
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                bgcolor: "#fff",
+                border: "1px solid #E2E8EC",
+                borderRadius: { xs: "24px", md: "28px" },
+                p: { xs: 2.5, md: 3.5 },
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                minWidth: 0,
+              }}
+            >
+              <Typography sx={{ color: primary, fontSize: 12, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>
+                Before you begin
+              </Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: { xs: 24, md: 28 }, letterSpacing: -0.5, lineHeight: 1.2, mt: 0.75 }}>
+                Your name
+              </Typography>
               {locked ? (
-                <Typography sx={{ color: muted, mt: 2.5, lineHeight: 1.6 }}>
+                <Typography sx={{ color: muted, mt: 1.5, lineHeight: 1.6 }}>
                   The desk has locked this quiz. Open it again when it is available.
                 </Typography>
               ) : quizLength === 0 ? (
-                <Typography sx={{ color: muted, mt: 2.5 }}>This quiz has no questions yet.</Typography>
+                <Typography sx={{ color: muted, mt: 1.5, lineHeight: 1.6 }}>This quiz has no questions yet.</Typography>
               ) : (
                 <>
-                  <Box mt={2.5}>
-                    <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75 }}>Name</Typography>
-                    <TextField
-                      fullWidth
-                      placeholder="Your name"
-                      value={studentName}
-                      error={Boolean(nameMessage)}
-                      helperText={nameMessage || "This name is printed on your result."}
-                      onChange={(event) => {
-                        setStudentName(event.target.value);
-                        setNameMessage("");
-                      }}
-                      sx={fieldSx}
-                    />
-                  </Box>
+                  <Typography sx={{ color: muted, mt: 1, lineHeight: 1.6 }}>
+                    This name is printed on your result.
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    placeholder="Your name"
+                    value={studentName}
+                    error={Boolean(nameMessage)}
+                    helperText={nameMessage || " "}
+                    onChange={(event) => {
+                      setStudentName(event.target.value);
+                      setNameMessage("");
+                    }}
+                    sx={{ mt: 2, ...fieldSx }}
+                  />
                   <Button
+                    fullWidth
                     variant="contained"
                     onClick={start}
                     sx={{
-                      mt: 2.5,
+                      mt: 1,
                       textTransform: "none",
                       fontWeight: 600,
                       borderRadius: 999,
-                      px: 2.75,
-                      py: 1.1,
+                      py: 1.2,
                       bgcolor: accent,
                       boxShadow: "none",
                       "&:hover": { bgcolor: accentHover, boxShadow: "none" },
@@ -264,14 +320,14 @@ export default function PublicQuizPage({ params }) {
                 </>
               )}
             </Box>
-          </>
+          </Box>
         ) : (
           <>
             <Box
               sx={{
-                position: "sticky",
-                top: { xs: 76, md: 88 },
-                zIndex: 4,
+                position: { xs: "static", md: "sticky" },
+                top: { md: 88 },
+                zIndex: { md: 4 },
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -527,41 +583,6 @@ export default function PublicQuizPage({ params }) {
   );
 }
 
-function Hero({ title, body }) {
-  return (
-    <Box
-      sx={{
-        borderRadius: { xs: "24px", md: "32px" },
-        background: "linear-gradient(145deg, #0A192F 0%, #071322 55%, #123044 100%)",
-        px: { xs: 3, sm: 4.5, md: 6 },
-        py: { xs: 5, md: 7 },
-      }}
-    >
-      <Typography
-        component="p"
-        sx={{
-          color: "#fff",
-          border: "1px solid rgba(255,255,255,0.16)",
-          borderRadius: 999,
-          px: 1.5,
-          py: 0.4,
-          fontSize: 12,
-          letterSpacing: 0.6,
-          mb: 2.5,
-          width: "fit-content",
-        }}
-      >
-        Quiz
-      </Typography>
-      <Typography component="h1" sx={{ color: "#fff", fontWeight: 700, letterSpacing: -1.2, lineHeight: 1.05, fontSize: { xs: 36, sm: 48, md: 56 }, maxWidth: 760 }}>
-        {title}
-      </Typography>
-      <Typography sx={{ color: "rgba(255,255,255,0.72)", fontSize: 17, lineHeight: 1.65, maxWidth: 560, mt: 2.5 }}>{body}</Typography>
-      <PageTrail onDark items={[{ label: "Classes", href: "/classes" }, { label: title }]} />
-    </Box>
-  );
-}
-
 function Notice({ title, body }) {
   return (
     <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "24px", p: { xs: 3, md: 4 } }}>
@@ -574,11 +595,21 @@ function Notice({ title, body }) {
   );
 }
 
-function Meta({ label, value }) {
+function Meta({ label, value, onDark = false, span = false }) {
   return (
-    <Box>
-      <Typography sx={{ color: muted, fontSize: 12, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</Typography>
-      <Typography sx={{ fontWeight: 700, fontSize: 18, mt: 0.35, textTransform: "capitalize" }}>{value}</Typography>
+    <Box
+      sx={{
+        gridColumn: span ? { xs: "1 / -1", sm: "auto" } : undefined,
+        borderRadius: "16px",
+        px: 1.5,
+        py: 1.25,
+        bgcolor: onDark ? "rgba(255,255,255,0.06)" : "#F0F3F5",
+        border: onDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #E2E8EC",
+        minWidth: 0,
+      }}
+    >
+      <Typography sx={{ color: onDark ? "rgba(255,255,255,0.62)" : muted, fontSize: 12, fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>{label}</Typography>
+      <Typography sx={{ color: onDark ? "#fff" : ink, fontWeight: 700, fontSize: 18, mt: 0.35, textTransform: "capitalize" }}>{value}</Typography>
     </Box>
   );
 }

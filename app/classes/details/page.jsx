@@ -21,7 +21,7 @@ import { resolveLessonPath } from "@/lib/classCatalog";
 import { chapterAnchor, classAnchor, lessonPath, modulePath, subjectPath } from "@/lib/classPath";
 import LegacyClassRedirect from "@/components/Classes/LegacyClassRedirect";
 
-const tabs = ["Theory", "Files", "Videos", "Quizzes"];
+const tabs = ["Theory", "Quizzes", "Files", "Videos"];
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -319,7 +319,7 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
         { label: "Lesson" },
       ];
 
-  const counts = [null, content.pdfs?.length || 0, youtubeVideos.length, quizzes.length];
+  const counts = [null, quizzes.length, content.pdfs?.length || 0, youtubeVideos.length];
 
   return (
     <Box sx={{ bgcolor: pageBackground, color: ink, pt: { xs: "96px", md: "112px" }, pb: { xs: 8, md: 12 } }}>
@@ -460,7 +460,7 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
                   </>
                 )}
 
-                {tab === 1 && (
+                {tab === 2 && (
                   content.pdfs?.length > 0 ? (
                     <Box sx={{ display: "grid", gap: 1.25 }}>
                       {content.pdfs.map((file, index) => (
@@ -502,7 +502,7 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
                   )
                 )}
 
-                {tab === 2 && (
+                {tab === 3 && (
                   youtubeVideos.length > 0 ? (
                     <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 1.5 }}>
                       {youtubeVideos.map((item, index) => (
@@ -525,7 +525,7 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
                   )
                 )}
 
-                {tab === 3 && (
+                {tab === 1 && (
                   quizzes.length > 0 ? (
                     <Box sx={{ display: "grid", gap: 1.25 }}>
                       {quizzes.map((quiz) => {

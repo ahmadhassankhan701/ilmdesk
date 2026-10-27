@@ -40,7 +40,7 @@ export default function middleware(req) {
 
   if (
     user &&
-    (path.startsWith("/dashboard/teachers") || path.startsWith("/dashboard/curriculum") || path.startsWith("/dashboard/reviews")) &&
+    (path.startsWith("/dashboard/teachers") || path.startsWith("/dashboard/curriculum") || path.startsWith("/dashboard/reviews") || path.startsWith("/dashboard/payments")) &&
     user.role !== ROLES.owner
   ) {
     return redirectTo(req, "/dashboard");

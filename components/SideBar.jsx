@@ -102,7 +102,7 @@ export default function SideBar({ children }) {
         { name: "Dashboard", icon: DashboardOutlined, route: "/dashboard" },
         { name: "Curriculum", icon: MenuBookOutlined, route: "/dashboard/curriculum" },
         { name: "Reviews", icon: RateReviewOutlined, route: "/dashboard/reviews" },
-        { name: "Payments", icon: AccountBalanceWalletOutlined, route: "/dashboard/account" },
+        { name: "Payments", icon: AccountBalanceWalletOutlined, route: "/dashboard/payments" },
         { name: "Teachers", icon: Groups, route: "/dashboard/teachers" },
         { name: "Profile", icon: PersonOutline, route: "/dashboard/profile" },
       ]

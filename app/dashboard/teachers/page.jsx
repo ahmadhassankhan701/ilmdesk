@@ -3,6 +3,7 @@
 import SideBar from "@/components/SideBar";
 import PageTitle from "@/components/Dashboard/PageTitle";
 import { listTeacherAccounts, setTeacherStatus } from "@/lib/accounts";
+import { requestDeskEmail } from "@/lib/deskNotify";
 import { statusLabel, STATUSES } from "@/lib/roles";
 import { useAuth } from "@/context/AuthContext";
 import { Box, Button, Typography } from "@mui/material";
@@ -60,16 +61,31 @@ export default function TeachersPage() {
     };
   }, [ready, state.user, router]);
 
-  const updateStatus = async (uid, status) => {
+  const updateStatus = async (teacher, status) => {
     try {
-      setSavingId(uid);
-      await setTeacherStatus(uid, status);
-      setTeachers((current) =>
-        current.map((teacher) =>
-          teacher.id === uid ? { ...teacher, status } : teacher
-        )
-      );
-      toast.success(status === STATUSES.active ? "Teacher approved" : "Teacher rejected");
+      setSavingId(teacher.id);
+      await setTeacherStatus(teacher.id, status);
+      setTeachers((current) => current.map((item) => (item.id === teacher.id ? { ...item, status } : item)));
+      const kind = status === STATUSES.active ? "approved" : "rejected";
+      let mailError = "";
+      if (!teacher.email) mailError = "This account has no email address.";
+      else {
+        try {
+          await requestDeskEmail({
+            type: "teacher",
+            kind,
+            to: teacher.email,
+            name: teacher.name,
+            focus: teacher.focus,
+          });
+        } catch (error) {
+          console.error(error);
+          mailError = error?.message || "The email could not be sent.";
+        }
+      }
+      const done = status === STATUSES.active ? "Teacher approved" : "Teacher rejected";
+      if (mailError) toast.error(`${done}. ${mailError}`);
+      else toast.success(`${done}. They were emailed, and a copy went to the desk.`);
     } catch (error) {
       console.error(error);
       toast.error("Could not update this teacher. Deploy the Firestore rules if this is a permission error.");
@@ -130,7 +146,7 @@ export default function TeachersPage() {
                 <Button
                   variant="contained"
                   disabled={savingId === teacher.id || teacher.status === STATUSES.active}
-                  onClick={() => updateStatus(teacher.id, STATUSES.active)}
+                  onClick={() => updateStatus(teacher, STATUSES.active)}
                   sx={{
                     textTransform: "none",
                     bgcolor: "#027a48",
@@ -142,7 +158,7 @@ export default function TeachersPage() {
                 <Button
                   variant="outlined"
                   disabled={savingId === teacher.id || teacher.status === STATUSES.rejected}
-                  onClick={() => updateStatus(teacher.id, STATUSES.rejected)}
+                  onClick={() => updateStatus(teacher, STATUSES.rejected)}
                   sx={{
                     textTransform: "none",
                     borderColor: "#b42318",

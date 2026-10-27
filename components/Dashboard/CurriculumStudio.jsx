@@ -23,6 +23,8 @@ import {
   renameClassItem,
   renameCourseModule,
   saveCourse,
+  setClassImage,
+  setClassItemImage,
   uploadCurriculumFile,
 } from "@/lib/curriculum";
 import { CLASS_LEVELS, DIFFICULTIES } from "@/lib/curriculumFormat";
@@ -132,6 +134,9 @@ export function ClassStudio({ classId }) {
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState("");
   const [className, setClassName] = useState("");
+  const [classImage, setClassImageUrl] = useState("");
+  const [coverBusy, setCoverBusy] = useState(false);
+  const [subjectCoverId, setSubjectCoverId] = useState("");
   const [rename, setRename] = useState({ id: "", name: "" });
   const [loading, setLoading] = useState(!isNew);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -152,6 +157,7 @@ export function ClassStudio({ classId }) {
         const name = snap.data().name || "Class";
         setPath([{ id: snap.id, name }]);
         setClassName(name);
+        setClassImageUrl(snap.data().image || "");
         setCursor(1);
       } catch (error) {
         console.error(error);
@@ -193,6 +199,57 @@ export function ClassStudio({ classId }) {
     } catch (error) {
       console.error(error);
       toast.error(error.message || "Could not create this class.");
+    }
+  };
+
+  const changeCover = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !path[0]?.id) return;
+    try {
+      setCoverBusy(true);
+      const prepared = await prepareImage(file, "cover");
+      const stored = await uploadCurriculumFile("CoursesImages", "", prepared);
+      await setClassImage(path[0].id, stored.fileUrl, classImage);
+      setClassImageUrl(stored.fileUrl);
+      toast.success("Cover saved.");
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof UploadPrepError ? error.message : "Could not save that cover.");
+    } finally {
+      setCoverBusy(false);
+    }
+  };
+
+  const clearCover = async () => {
+    if (!path[0]?.id) return;
+    try {
+      setCoverBusy(true);
+      await setClassImage(path[0].id, "", classImage);
+      setClassImageUrl("");
+      toast.success("Cover removed.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not remove the cover.");
+    } finally {
+      setCoverBusy(false);
+    }
+  };
+
+  const changeSubjectCover = async (item, file) => {
+    if (!file || !item?.id) return;
+    try {
+      setSubjectCoverId(item.id);
+      const prepared = await prepareImage(file, "cover");
+      const stored = await uploadCurriculumFile("CoursesImages", "", prepared);
+      await setClassItemImage(1, item.id, stored.fileUrl, item.image || "");
+      setItems(await listClassItems(cursor, path[cursor - 1].id));
+      toast.success("Subject cover saved.");
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof UploadPrepError ? error.message : "Could not save that cover.");
+    } finally {
+      setSubjectCoverId("");
     }
   };
 
@@ -313,6 +370,22 @@ export function ClassStudio({ classId }) {
             <Typography sx={{ color: muted, fontSize: 14, mb: 2 }}>This is the name in the curriculum list and on the site.</Typography>
             <TextField size="small" fullWidth placeholder="Class name" value={className} onChange={(event) => setClassName(event.target.value)} sx={{ ...fieldSx, mb: 2 }} />
             <Button type="submit" sx={{ ...pillButton, width: "auto", bgcolor: primary, color: "#fff", "&:hover": { bgcolor: primaryHover, boxShadow: "none" } }}>Save name</Button>
+            <Typography sx={{ fontWeight: 700, color: ink, fontSize: 18, mt: 3 }}>Cover</Typography>
+            <Typography sx={{ color: muted, fontSize: 14, mt: 0.4, mb: 1.5 }}>
+              This image is used on the classes page. Until you set one, a subject picture is chosen from the name.
+            </Typography>
+            {classImage ? <Box component="img" src={classImage} alt="" sx={{ width: "100%", maxWidth: 360, height: 160, objectFit: "cover", borderRadius: "16px", mb: 1.5, display: "block" }} /> : null}
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              <Button component="label" disabled={coverBusy} sx={{ ...pillButton, width: "auto", py: 0.7, bgcolor: ink, color: "#fff", "&:hover": { bgcolor: "#132A46" } }}>
+                {coverBusy ? "Saving…" : classImage ? "Replace cover" : "Add cover"}
+                <input hidden type="file" accept="image/*" onChange={changeCover} />
+              </Button>
+              {classImage ? (
+                <Button type="button" disabled={coverBusy} onClick={clearCover} sx={{ ...pillButton, width: "auto", py: 0.7, bgcolor: "transparent", color: accent, border: `1px solid ${accent}`, "&:hover": { bgcolor: "rgba(255, 107, 107, 0.08)" } }}>
+                  Remove cover
+                </Button>
+              ) : null}
+            </Box>
             <StepMove canBack={false} canNext onBack={() => {}} onNext={() => setCursor(1)} />
           </Box>
         ) : onLesson ? (
@@ -323,7 +396,9 @@ export function ClassStudio({ classId }) {
         ) : (
           <Box sx={panel()}>
             <Typography sx={{ fontWeight: 700, color: ink, fontSize: 22 }}>{path[cursor - 1].name}</Typography>
-            <Typography sx={{ color: muted, fontSize: 14, mt: 0.4, mb: 2 }}>Add a {level.label.toLowerCase()}, then open it to continue.</Typography>
+            <Typography sx={{ color: muted, fontSize: 14, mt: 0.4, mb: 2 }}>
+              {cursor === 1 ? "Add a subject, then set its cover. The cover shows on the classes page." : `Add a ${level.label.toLowerCase()}, then open it to continue.`}
+            </Typography>
             <Box component="form" onSubmit={addCurrent} sx={{ display: "flex", gap: 1, mb: 2 }}>
               <TextField size="small" fullWidth placeholder={`New ${level.label.toLowerCase()}`} value={draft} onChange={(event) => setDraft(event.target.value)} sx={fieldSx} />
               <Button type="submit" sx={{ ...pillButton, width: "auto", px: 2.2, bgcolor: primary, color: "#fff", "&:hover": { bgcolor: primaryHover, boxShadow: "none" } }}>Add</Button>
@@ -333,6 +408,9 @@ export function ClassStudio({ classId }) {
                 <Row
                   key={item.id}
                   name={item.name}
+                  image={cursor === 1 ? item.image || "" : ""}
+                  coverBusy={subjectCoverId === item.id}
+                  onCover={cursor === 1 ? (file) => changeSubjectCover(item, file) : undefined}
                   selected={path[cursor]?.id === item.id}
                   editing={rename.id === item.id}
                   editName={rename.name}
@@ -606,9 +684,12 @@ export function CourseStudio({ courseId }) {
   );
 }
 
-function Row({ name, selected, editing, editName, onEditName, onOpen, onStartRename, onSaveRename, onCancelRename, onRemove }) {
+function Row({ name, image, coverBusy, onCover, selected, editing, editName, onEditName, onOpen, onStartRename, onSaveRename, onCancelRename, onRemove }) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, border: `1px solid ${selected ? pine : "#E2E8EC"}`, bgcolor: selected ? "rgba(13, 154, 172, 0.08)" : "#fff", borderRadius: "16px", px: 1.2, py: 0.6 }}>
+      {onCover && image && !editing ? (
+        <Box component="img" src={image} alt="" sx={{ width: 64, height: 44, objectFit: "cover", borderRadius: "10px", bgcolor: "#E2E8EC", flexShrink: 0 }} />
+      ) : null}
       {editing ? (
         <TextField size="small" fullWidth value={editName} onChange={(event) => onEditName(event.target.value)} sx={fieldSx} />
       ) : (
@@ -623,6 +704,25 @@ function Row({ name, selected, editing, editName, onEditName, onOpen, onStartRen
         </>
       ) : (
         <>
+          {onCover ? (
+            <Button
+              component="label"
+              disabled={coverBusy}
+              sx={{ ...pillButton, width: "auto", py: 0.55, px: 1.4, flexShrink: 0, bgcolor: "transparent", color: ink, border: "1px solid #C9D3D9", "&:hover": { bgcolor: "#F0F3F5" } }}
+            >
+              {coverBusy ? "Saving…" : image ? "Replace cover" : "Add cover"}
+              <input
+                hidden
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) onCover(file);
+                }}
+              />
+            </Button>
+          ) : null}
           <IconButton aria-label={`Rename ${name}`} onClick={onStartRename}><EditOutlined sx={{ fontSize: 18 }} /></IconButton>
           <IconButton aria-label={`Remove ${name}`} onClick={onRemove}><Close sx={{ fontSize: 18 }} /></IconButton>
           <IconButton aria-label={`Open ${name}`} onClick={onOpen}><ChevronRight /></IconButton>

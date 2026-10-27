@@ -29,17 +29,25 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState, Suspense, useCallback } from "react";
 import { Backdrop } from "@mui/material";
+import { toast } from "react-toastify";
+import { useAuth } from "@/context/AuthContext";
 
 const ModulesPage = () => {
   const route = useRouter();
   const searchParam = useSearchParams();
   const courseId = searchParam.get("id");
+  const { state, ready } = useAuth();
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const fetchModules = useCallback(async () => {
+    if (!ready) return;
     if (!courseId) {
       route.back();
+      return;
+    }
+    if (!state?.user) {
+      route.replace(`/auth?redirect=${encodeURIComponent(`/courses/modules?id=${courseId}`)}`);
       return;
     }
     try {
@@ -52,13 +60,19 @@ const ModulesPage = () => {
         return;
       }
       const courseData = docSnapshot.data();
+      const students = Array.isArray(courseData.students) ? courseData.students : [];
+      if (!students.includes(state.user.uid)) {
+        toast.error("This course opens after the desk confirms your receipt.");
+        route.push("/dashboard/courses");
+        return;
+      }
       setModules(courseData.modules || []);
     } catch (error) {
       console.error("Error fetching modules", error);
     } finally {
       setLoading(false);
     }
-  }, [courseId, route]);
+  }, [courseId, ready, route, state?.user]);
 
   useEffect(() => {
     fetchModules();

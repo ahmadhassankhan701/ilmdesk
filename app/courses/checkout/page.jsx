@@ -41,6 +41,7 @@ function CheckoutPage() {
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
   const [failed, setFailed] = useState(false);
   const redirected = useRef(false);
   const user = state?.user;
@@ -91,7 +92,7 @@ function CheckoutPage() {
           return;
         }
         if (payments.docs.some((item) => item.data().status === "pending")) {
-          leave("This receipt is already with the desk.", "/dashboard/account");
+          leave("Your receipt is with the desk. The dashboard is open. This course opens after the receipt is confirmed.", "/dashboard");
           return;
         }
         setCourse(courseSnap.exists() ? { id: courseSnap.id, ...courseData } : null);
@@ -132,8 +133,7 @@ function CheckoutPage() {
         paidAt: new Date(),
         confirmedAt: new Date(),
       });
-      toast.success("Receipt uploaded. Wait for confirmation.");
-      router.push("/dashboard/account");
+      setSent(true);
     } catch (error) {
       console.error(error);
       toast.error(error instanceof UploadPrepError ? error.message : "The receipt could not be sent.");
@@ -189,6 +189,17 @@ function CheckoutPage() {
           <Notice title="Checkout could not be opened" body="Refresh the page and try again." />
         ) : !course ? (
           <Notice title="This course is not listed" body="Go back to the course list and choose another." />
+        ) : sent ? (
+          <Box sx={{ mt: 3, bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "24px", p: { xs: 3, md: 4 }, maxWidth: 720 }}>
+            <Typography sx={{ color: primary, fontSize: 13, fontWeight: 700, letterSpacing: 1.1, textTransform: "uppercase" }}>Receipt received</Typography>
+            <Typography sx={{ fontWeight: 700, fontSize: 28, letterSpacing: -0.5, mt: 0.6 }}>The desk will confirm this payment.</Typography>
+            <Typography sx={{ color: muted, mt: 1.5, lineHeight: 1.65, maxWidth: 560 }}>
+              Once {title} is confirmed, its lessons open for you. The dashboard is available now. This course stays closed until then.
+            </Typography>
+            <Typography component={Link} href="/dashboard" sx={{ display: "inline-block", color: primary, fontWeight: 600, mt: 2, textDecoration: "none", "&:hover": { color: primaryHover } }}>
+              Go to dashboard
+            </Typography>
+          </Box>
         ) : (
           <Box sx={{ mt: 3, display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1.2fr) minmax(260px, 0.8fr)" }, gap: 1.5, alignItems: "start" }}>
             <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "22px", p: { xs: 2.5, md: 3 } }}>

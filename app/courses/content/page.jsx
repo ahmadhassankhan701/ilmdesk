@@ -96,8 +96,11 @@ const ContentPage = () => {
       const docRef = doc(db, "courses", courseId);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        const students = docSnap.data().students;
-        if (students.includes(userId) === false) route.push("/courses");
+        const students = Array.isArray(docSnap.data().students) ? docSnap.data().students : [];
+        if (students.includes(userId) === false) {
+          toast.error("This course opens after the desk confirms your receipt.");
+          route.push("/dashboard/courses");
+        }
       } else {
         route.back();
       }
