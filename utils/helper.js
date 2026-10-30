@@ -15,9 +15,15 @@ function wrapImagesInContainer(html) {
     wrapper.style.alignItems = "center";
 
     // Style the image
+    img.removeAttribute("width");
+    img.removeAttribute("height");
     img.style.maxWidth = "100%";
-    img.style.maxHeight = "100%";
+    img.style.width = "auto";
+    img.style.height = "auto";
     img.style.objectFit = "contain";
+    img.style.display = "block";
+    wrapper.style.maxWidth = "100%";
+    wrapper.style.overflow = "hidden";
 
     // Replace the image with the wrapper
     img.parentNode.insertBefore(wrapper, img);

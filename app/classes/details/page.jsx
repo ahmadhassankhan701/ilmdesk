@@ -49,28 +49,24 @@ function visibleText(html) {
     .trim();
 }
 
-function stripImages(html) {
+function stripGalleryImages(html, gallery) {
+  const urls = new Set((gallery || []).map((image) => image.fileUrl).filter(Boolean));
+  if (!urls.size) return String(html || "");
   return String(html || "")
-    .replace(/<p>\s*(?:<img\b[^>]*>\s*)+<\/p>/gi, "")
-    .replace(/<img\b[^>]*>/gi, "");
+    .replace(/<p>\s*(?:<img\b[^>]*>\s*)+<\/p>/gi, (paragraph) => {
+      const src = paragraph.match(/src=["']([^"']+)["']/i)?.[1];
+      return src && urls.has(src) ? "" : paragraph;
+    })
+    .replace(/<img\b[^>]*>/gi, (tag) => {
+      const src = tag.match(/src=["']([^"']+)["']/i)?.[1];
+      return src && urls.has(src) ? "" : tag;
+    });
 }
 
 function lessonImages(content) {
-  const stored = (Array.isArray(content?.images) ? content.images : [])
+  return (Array.isArray(content?.images) ? content.images : [])
     .filter((image) => image?.fileUrl)
     .map((image) => ({ fileUrl: image.fileUrl, name: image.name || "Image", featured: Boolean(image.featured) }));
-  if (stored.length) return stored;
-
-  const html = typeof content?.theory === "string" ? content.theory : "";
-  const found = [];
-  const pattern = /<img\b[^>]*src=["']([^"']+)["'][^>]*>/gi;
-  let match = pattern.exec(html);
-  while (match) {
-    const alt = match[0].match(/alt=["']([^"']*)["']/i);
-    found.push({ fileUrl: match[1], name: alt?.[1] || "Image", featured: found.length === 0 });
-    match = pattern.exec(html);
-  }
-  return found;
 }
 
 function ImageGallery({ images, active, onPick }) {
@@ -299,10 +295,10 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
   }, [images]);
   const notesHtml = useMemo(() => {
     if (typeof window === "undefined" || typeof content.theory !== "string") return "";
-    const notes = stripImages(content.theory);
-    if (!visibleText(notes)) return "";
+    const notes = stripGalleryImages(content.theory, images);
+    if (!visibleText(notes) && !/<img\b/i.test(notes)) return "";
     return wrapImagesInContainer(notes);
-  }, [content]);
+  }, [content, images]);
   const shownImage = Math.min(activeImage, Math.max(images.length - 1, 0));
 
   const trail = place
@@ -400,7 +396,7 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
             }}
           >
             <Box sx={{ display: "grid", gap: 1.5, minWidth: 0 }}>
-              <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "22px", p: { xs: 2, md: 3 } }}>
+              <Box sx={{ bgcolor: "#fff", border: "1px solid #E2E8EC", borderRadius: "22px", p: { xs: 2, md: 3 }, minWidth: 0, overflow: "hidden" }}>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2.5 }}>
                   {tabs.map((label, index) => {
                     const selected = tab === index;
@@ -438,6 +434,9 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
                       <Box
                         sx={{
                           mt: images.length ? 3 : 0,
+                          maxWidth: "100%",
+                          minWidth: 0,
+                          overflow: "hidden",
                           color: ink,
                           fontSize: 16.5,
                           lineHeight: 1.75,
@@ -445,7 +444,7 @@ export function LessonPage({ classSlug, subjectSlug, moduleSlug, chapterSlug, to
                           "& h1, & h2, & h3": { fontWeight: 700, letterSpacing: -0.4, lineHeight: 1.2, mt: 2.5, mb: 1 },
                           "& a": { color: primary },
                           "& ul, & ol": { pl: 3, mb: 1.6 },
-                          "& img": { maxWidth: "100%", height: "auto", borderRadius: "16px", display: "block", my: 2 },
+                          "& img": { maxWidth: "100%", width: "auto", height: "auto", objectFit: "contain", borderRadius: "16px", display: "block", my: 2 },
                           "& blockquote": { borderLeft: `3px solid ${primary}`, m: 0, pl: 2, color: muted },
                         }}
                       >

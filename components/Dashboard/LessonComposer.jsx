@@ -9,7 +9,7 @@ import RichTextField from "@/components/Dashboard/RichTextField";
 import { accent } from "@/lib/brand";
 import { loadLesson, removeStoredFile, saveLesson, uploadCurriculumFile } from "@/lib/curriculum";
 import { DIFFICULTIES, emptyQuestion, newBlock, youtubeId } from "@/lib/curriculumFormat";
-import { PDF_MAX_BYTES, pdfLimitMessage } from "@/lib/mediaLimits";
+import { PDF_MAX_BYTES, imagePrepNote, pdfLimitMessage } from "@/lib/mediaLimits";
 import { prepareImage, UploadPrepError } from "@/lib/prepareUpload";
 import { mergeQuestions, parseCsv, questionsFromTable, sampleCsv } from "@/lib/quizSheet";
 
@@ -140,6 +140,21 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
     });
   };
 
+  const insertTheoryImage = async (file) => {
+    try {
+      setPreparing(true);
+      const prepared = await prepareImage(file, "lesson");
+      const stored = await uploadCurriculumFile(imageFolder, contentId, prepared);
+      return stored.fileUrl;
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof UploadPrepError ? error.message : "This image could not be added.");
+      return "";
+    } finally {
+      setPreparing(false);
+    }
+  };
+
   const addImages = async (event) => {
     const files = Array.from(event.target.files || []);
     event.target.value = "";
@@ -261,16 +276,22 @@ export default function LessonComposer({ kind, contentId, courseId, title }) {
       ) : (
         <>
           {tab === "text" && (
-            <RichTextField
-              value={textBlock?.text || ""}
-              onChange={(text) => {
-                if (!textBlock) {
-                  setBlocks((current) => [{ ...newBlock("text"), text }, ...current]);
-                  return;
-                }
-                patchBlock(textBlock.id, { text });
-              }}
-            />
+            <Box>
+              <RichTextField
+                value={textBlock?.text || ""}
+                onAddImage={insertTheoryImage}
+                onChange={(text) => {
+                  if (!textBlock) {
+                    setBlocks((current) => [{ ...newBlock("text"), text }, ...current]);
+                    return;
+                  }
+                  patchBlock(textBlock.id, { text });
+                }}
+              />
+              <Typography sx={{ color: muted, fontSize: 13, lineHeight: 1.55, mt: 1.25 }}>
+                {imagePrepNote("lesson")} A larger photo is resized when you add it.
+              </Typography>
+            </Box>
           )}
           {tab === "image" && (
             <Box>

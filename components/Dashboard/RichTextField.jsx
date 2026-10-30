@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Box, IconButton, TextField } from "@mui/material";
 import {
   FormatAlignCenter,
@@ -11,6 +11,7 @@ import {
   FormatListNumbered,
   FormatQuote,
   FormatUnderlined,
+  ImageOutlined,
   LinkOutlined,
 } from "@mui/icons-material";
 import Link from "@tiptap/extension-link";
@@ -20,6 +21,7 @@ import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { fieldSx, ink, primary } from "@/components/AuthFrame";
+import { TheoryImage } from "@/components/Dashboard/theoryImage";
 
 const pine = "#0D9AAC";
 
@@ -57,9 +59,11 @@ function Tool({ label, active, onClick, children }) {
   );
 }
 
-export default function RichTextField({ value, onChange, placeholder = "Write the explanation" }) {
+export default function RichTextField({ value, onChange, onAddImage, placeholder = "Write the explanation" }) {
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
+  const [addingImage, setAddingImage] = useState(false);
+  const imageInput = useRef(null);
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -78,6 +82,7 @@ export default function RichTextField({ value, onChange, placeholder = "Write th
       }),
       Placeholder.configure({ placeholder }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
+      TheoryImage,
     ],
     content: htmlForEditor(value),
     onUpdate: ({ editor: current }) => {
@@ -96,6 +101,21 @@ export default function RichTextField({ value, onChange, placeholder = "Write th
     const href = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
     editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
     setLinkOpen(false);
+  };
+
+  const addImage = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !editor || !onAddImage) return;
+    setAddingImage(true);
+    try {
+      const src = await onAddImage(file);
+      if (!src) return;
+      const alt = file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim().slice(0, 80) || "Theory image";
+      editor.chain().focus().setImage({ src, alt }).run();
+    } finally {
+      setAddingImage(false);
+    }
   };
 
   return (
@@ -117,6 +137,16 @@ export default function RichTextField({ value, onChange, placeholder = "Write th
           color: ink,
           fontSize: 15,
           lineHeight: 1.65,
+          overflowX: "hidden",
+          maxWidth: "100%",
+        },
+        "& .ProseMirror img": {
+          display: "block",
+          maxWidth: "100%",
+          height: "auto",
+          objectFit: "contain",
+          borderRadius: "12px",
+          my: 1,
         },
         "& .ProseMirror p": { margin: "0 0 0.65em" },
         "& .ProseMirror h2": { fontSize: 22, fontWeight: 700, lineHeight: 1.3, margin: "0.2em 0 0.45em" },
@@ -193,7 +223,21 @@ export default function RichTextField({ value, onChange, placeholder = "Write th
         >
           <LinkOutlined sx={{ fontSize: 18 }} />
         </Tool>
+        {onAddImage ? (
+          <Tool label="Add image" active={addingImage} onClick={() => !addingImage && imageInput.current?.click()}>
+            <ImageOutlined sx={{ fontSize: 18 }} />
+          </Tool>
+        ) : null}
       </Box>
+      {onAddImage ? (
+        <input
+          ref={imageInput}
+          hidden
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+          onChange={addImage}
+        />
+      ) : null}
       {linkOpen && (
         <Box
           component="form"

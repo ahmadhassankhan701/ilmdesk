@@ -190,15 +190,27 @@ const ContentPage = () => {
               >
                 Overview
               </Typography>
-              <Typography
-                variant="div"
-                component={"div"}
-                sx={{ fontSize: 16, color: "#001920", mt: 1 }}
+              <Box
+                sx={{
+                  fontSize: 16,
+                  color: "#001920",
+                  mt: 1,
+                  maxWidth: "100%",
+                  overflow: "hidden",
+                  "& img": {
+                    maxWidth: "100%",
+                    width: "auto",
+                    height: "auto",
+                    objectFit: "contain",
+                    display: "block",
+                  },
+                  "& p": { overflowWrap: "anywhere" },
+                }}
               >
                 {content && content.theory
                   ? renderHTML(wrapImagesInContainer(content.theory))
                   : "No theory yet"}
-              </Typography>
+              </Box>
               <Box sx={{ mt: 5 }}>
                 <Typography
                   variant="h6"

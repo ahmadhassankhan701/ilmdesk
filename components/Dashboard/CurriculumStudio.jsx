@@ -28,6 +28,7 @@ import {
   uploadCurriculumFile,
 } from "@/lib/curriculum";
 import { CLASS_LEVELS, DIFFICULTIES } from "@/lib/curriculumFormat";
+import { imagePrepNote } from "@/lib/mediaLimits";
 import { prepareImage, UploadPrepError } from "@/lib/prepareUpload";
 import { ROLES } from "@/lib/roles";
 import { accent } from "@/lib/brand";
@@ -372,7 +373,7 @@ export function ClassStudio({ classId }) {
             <Button type="submit" sx={{ ...pillButton, width: "auto", bgcolor: primary, color: "#fff", "&:hover": { bgcolor: primaryHover, boxShadow: "none" } }}>Save name</Button>
             <Typography sx={{ fontWeight: 700, color: ink, fontSize: 18, mt: 3 }}>Cover</Typography>
             <Typography sx={{ color: muted, fontSize: 14, mt: 0.4, mb: 1.5 }}>
-              This image is used on the classes page. Until you set one, a subject picture is chosen from the name.
+              This image is used on the classes page. Until you set one, a subject picture is chosen from the name. {imagePrepNote("cover")}
             </Typography>
             {classImage ? <Box component="img" src={classImage} alt="" sx={{ width: "100%", maxWidth: 360, height: 160, objectFit: "cover", borderRadius: "16px", mb: 1.5, display: "block" }} /> : null}
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
@@ -397,7 +398,9 @@ export function ClassStudio({ classId }) {
           <Box sx={panel()}>
             <Typography sx={{ fontWeight: 700, color: ink, fontSize: 22 }}>{path[cursor - 1].name}</Typography>
             <Typography sx={{ color: muted, fontSize: 14, mt: 0.4, mb: 2 }}>
-              {cursor === 1 ? "Add a subject, then set its cover. The cover shows on the classes page." : `Add a ${level.label.toLowerCase()}, then open it to continue.`}
+              {cursor === 1
+                ? `Add a subject, then set its cover. The cover shows on the classes page. ${imagePrepNote("cover")}`
+                : `Add a ${level.label.toLowerCase()}, then open it to continue.`}
             </Typography>
             <Box component="form" onSubmit={addCurrent} sx={{ display: "flex", gap: 1, mb: 2 }}>
               <TextField size="small" fullWidth placeholder={`New ${level.label.toLowerCase()}`} value={draft} onChange={(event) => setDraft(event.target.value)} sx={fieldSx} />
@@ -773,7 +776,7 @@ function CourseDetails({ details, setDetails, onSave }) {
           Save details
         </Button>
       </Box>
-      <Typography sx={{ color: muted, fontSize: 13, mt: 1.25 }}>The cover is resized to 1600px and compressed before it is saved.</Typography>
+      <Typography sx={{ color: muted, fontSize: 13, mt: 1.25, lineHeight: 1.55 }}>{imagePrepNote("cover")} A larger photo is resized when you add it.</Typography>
     </Box>
   );
 }
